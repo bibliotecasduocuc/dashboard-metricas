@@ -1,0 +1,2372 @@
+<!DOCTYPE html>
+<html lang="es-CL">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Indicadores · Sistema de Bibliotecas Duoc UC</title>
+
+<!-- Tipografía institucional: Lato (Regular 400, Bold 700, Black 900) -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700;900&display=swap" rel="stylesheet">
+
+<!-- Librerías desde CDN -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+
+<style>
+/* ============================================================
+   TOKENS DE IDENTIDAD VISUAL
+   ============================================================ */
+:root{
+  --negro:#000000;
+  --blanco:#FFFFFF;
+  --amarillo:#F5A800;
+  --amarillo-suave:#FFF4DC;
+  --superficie:#F5F5F5;
+  --superficie-alt:#FAFAFA;
+  --borde:#E2E2E2;
+  --borde-fuerte:#C9C9C9;
+  --texto:#111111;
+  --texto-tenue:#606060;
+  --texto-muy-tenue:#8A8A8A;
+  --serie-anterior:#B5B5B5;   /* año anterior: gris neutro */
+  --serie-actual:#000000;     /* año actual: negro */
+  --negativo:#B3261E;
+  --alerta:#8A6100;
+  --radio:2px;
+  --alto-banner:56px;
+  --alto-nav:48px;
+}
+
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  font-family:'Lato',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  font-weight:400;
+  background:var(--blanco);
+  color:var(--texto);
+  font-size:14px;
+  line-height:1.45;
+  -webkit-font-smoothing:antialiased;
+}
+h1,h2,h3,h4{margin:0;font-weight:900;letter-spacing:-0.01em;}
+button{font-family:inherit;font-size:inherit;cursor:pointer;}
+table{border-collapse:collapse;width:100%;}
+
+/* ============================================================
+   ENCABEZADO FIJO: banner negro + menú
+   ============================================================ */
+#cabecera{position:sticky;top:0;z-index:200;background:var(--negro);}
+
+#banner{
+  height:var(--alto-banner);
+  display:flex;align-items:center;gap:16px;
+  padding:0 24px;
+  color:var(--blanco);
+  border-bottom:1px solid #2A2A2A;
+}
+#banner .marca{display:flex;align-items:baseline;gap:10px;min-width:0;}
+#banner .marca strong{font-weight:900;font-size:17px;letter-spacing:-0.02em;white-space:nowrap;}
+#banner .marca span{
+  font-weight:400;font-size:12px;color:#B9B9B9;
+  border-left:1px solid #4A4A4A;padding-left:10px;white-space:nowrap;
+  overflow:hidden;text-overflow:ellipsis;
+}
+#banner .espaciador{flex:1;}
+#banner .meta{
+  text-align:right;font-size:11px;color:#B9B9B9;line-height:1.3;white-space:nowrap;
+}
+#banner .meta b{display:block;color:var(--blanco);font-weight:700;font-size:12px;}
+
+/* Botón de advertencias de calidad de datos */
+#btn-advertencias{
+  position:relative;background:transparent;border:1px solid #4A4A4A;color:#DADADA;
+  width:34px;height:34px;border-radius:var(--radio);font-size:15px;line-height:1;
+  display:none;align-items:center;justify-content:center;flex:none;
+}
+#btn-advertencias.visible{display:flex;}
+#btn-advertencias:hover{border-color:var(--amarillo);color:var(--amarillo);}
+#btn-advertencias .conteo{
+  position:absolute;top:-6px;right:-6px;background:var(--amarillo);color:var(--negro);
+  font-size:10px;font-weight:900;min-width:16px;height:16px;border-radius:8px;
+  display:flex;align-items:center;justify-content:center;padding:0 4px;
+}
+#panel-advertencias{
+  display:none;position:absolute;top:calc(var(--alto-banner) - 4px);right:24px;
+  width:min(460px,calc(100vw - 48px));max-height:60vh;overflow:auto;
+  background:var(--blanco);color:var(--texto);border:1px solid var(--borde-fuerte);
+  box-shadow:0 4px 16px rgba(0,0,0,.14);z-index:300;
+}
+#panel-advertencias.abierto{display:block;}
+#panel-advertencias h4{
+  font-size:12px;text-transform:uppercase;letter-spacing:.08em;
+  padding:12px 16px;border-bottom:1px solid var(--borde);background:var(--superficie);
+}
+#panel-advertencias ul{list-style:none;margin:0;padding:0;}
+#panel-advertencias li{
+  padding:9px 16px;border-bottom:1px solid var(--borde);font-size:12.5px;line-height:1.4;
+}
+#panel-advertencias li:last-child{border-bottom:none;}
+#panel-advertencias li .etq{
+  display:inline-block;font-size:10px;font-weight:900;text-transform:uppercase;
+  letter-spacing:.06em;background:var(--amarillo-suave);color:var(--alerta);
+  padding:1px 6px;margin-right:7px;border-radius:var(--radio);
+}
+
+/* Menú de navegación */
+#menu{
+  height:var(--alto-nav);display:flex;align-items:stretch;
+  padding:0 16px;overflow-x:auto;scrollbar-width:none;
+}
+#menu::-webkit-scrollbar{display:none;}
+#menu button{
+  background:transparent;border:none;color:#C4C4C4;
+  padding:0 16px;font-size:13px;font-weight:700;letter-spacing:.01em;
+  border-bottom:3px solid transparent;white-space:nowrap;transition:color .12s;
+}
+#menu button:hover{color:var(--blanco);}
+#menu button.activo{color:var(--blanco);border-bottom-color:var(--amarillo);}
+
+/* ============================================================
+   BARRA DE FILTROS
+   ============================================================ */
+#barra-filtros{
+  position:sticky;top:calc(var(--alto-banner) + var(--alto-nav));z-index:150;
+  background:var(--superficie);border-bottom:1px solid var(--borde);
+  padding:10px 24px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+}
+.grupo-filtro{display:flex;align-items:center;gap:7px;}
+.grupo-filtro > label{
+  font-size:10.5px;font-weight:900;text-transform:uppercase;letter-spacing:.09em;
+  color:var(--texto-tenue);
+}
+.control{
+  background:var(--blanco);border:1px solid var(--borde-fuerte);border-radius:var(--radio);
+  padding:6px 9px;font-size:13px;font-family:inherit;color:var(--texto);min-height:32px;
+}
+select.control{cursor:pointer;padding-right:26px;}
+.control:focus{outline:2px solid var(--amarillo);outline-offset:-1px;}
+
+/* Selector múltiple de sedes */
+.multi{position:relative;}
+.multi > button{
+  background:var(--blanco);border:1px solid var(--borde-fuerte);border-radius:var(--radio);
+  padding:6px 11px;font-size:13px;min-height:32px;min-width:170px;text-align:left;
+  display:flex;align-items:center;justify-content:space-between;gap:10px;
+}
+.multi > button:hover{border-color:var(--negro);}
+.multi > button .flecha{font-size:9px;color:var(--texto-tenue);}
+.multi-panel{
+  display:none;position:absolute;top:calc(100% + 4px);left:0;z-index:180;
+  width:290px;background:var(--blanco);border:1px solid var(--borde-fuerte);
+  box-shadow:0 4px 14px rgba(0,0,0,.12);
+}
+.multi-panel.abierto{display:block;}
+.multi-panel .acciones{
+  display:flex;gap:8px;padding:9px 12px;border-bottom:1px solid var(--borde);
+  background:var(--superficie-alt);
+}
+.multi-panel .acciones button{
+  flex:1;background:var(--blanco);border:1px solid var(--borde-fuerte);
+  padding:5px 8px;font-size:11.5px;font-weight:700;border-radius:var(--radio);
+}
+.multi-panel .acciones button:hover{border-color:var(--negro);background:var(--negro);color:var(--blanco);}
+.multi-panel .lista{max-height:280px;overflow-y:auto;padding:4px 0;}
+.multi-panel .lista label{
+  display:flex;align-items:center;gap:9px;padding:5px 12px;font-size:13px;cursor:pointer;
+}
+.multi-panel .lista label:hover{background:var(--superficie);}
+.multi-panel .lista input{accent-color:var(--negro);width:14px;height:14px;flex:none;}
+
+/* Chips de filtros activos */
+#chips-filtros{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-left:auto;}
+.chip{
+  display:inline-flex;align-items:center;gap:6px;
+  background:var(--blanco);border:1px solid var(--borde-fuerte);
+  padding:3px 9px;font-size:11.5px;border-radius:12px;color:var(--texto-tenue);
+}
+.chip b{font-weight:900;color:var(--texto);}
+.chip.acento{border-color:var(--amarillo);background:var(--amarillo-suave);color:var(--alerta);}
+.chip.acento b{color:var(--alerta);}
+
+#btn-pdf{
+  background:var(--negro);color:var(--blanco);border:1px solid var(--negro);
+  padding:7px 15px;font-size:12.5px;font-weight:900;border-radius:var(--radio);
+  letter-spacing:.02em;min-height:32px;white-space:nowrap;
+}
+#btn-pdf:hover{background:var(--amarillo);color:var(--negro);border-color:var(--amarillo);}
+
+/* ============================================================
+   CONTENIDO
+   ============================================================ */
+main{padding:22px 24px 64px;max-width:1680px;margin:0 auto;}
+.vista{display:none;}
+.vista.activa{display:block;}
+
+.encabezado-vista{margin-bottom:18px;}
+.encabezado-vista h1{font-size:26px;line-height:1.15;}
+.encabezado-vista h1 .sub{
+  display:block;font-size:12px;font-weight:700;text-transform:uppercase;
+  letter-spacing:.12em;color:var(--texto-tenue);margin-bottom:5px;
+}
+.encabezado-vista .periodo{
+  display:inline-block;margin-top:8px;font-size:13px;font-weight:700;
+  border-bottom:3px solid var(--amarillo);padding-bottom:2px;
+}
+
+/* Aviso de mes sin datos */
+.aviso{
+  display:none;align-items:flex-start;gap:10px;
+  background:var(--amarillo-suave);border-left:4px solid var(--amarillo);
+  padding:11px 15px;margin-bottom:18px;font-size:13px;color:var(--alerta);
+}
+.aviso.visible{display:flex;}
+.aviso strong{font-weight:900;}
+
+/* Secciones */
+.seccion{margin-bottom:26px;}
+.seccion > header{
+  background:var(--negro);color:var(--blanco);
+  padding:9px 15px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+}
+.seccion > header h2{font-size:13px;font-weight:900;text-transform:uppercase;letter-spacing:.09em;}
+.seccion > header .espaciador{flex:1;}
+.seccion > header select{
+  background:#1C1C1C;color:var(--blanco);border:1px solid #4A4A4A;
+  border-radius:var(--radio);padding:4px 8px;font-size:12px;font-family:inherit;cursor:pointer;
+}
+.seccion > header select:focus{outline:2px solid var(--amarillo);outline-offset:-1px;}
+.cuerpo-seccion{border:1px solid var(--borde);border-top:none;padding:16px;background:var(--blanco);}
+
+/* Tarjetas KPI */
+.grilla-kpi{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:26px;}
+.kpi{background:var(--superficie);border:1px solid var(--borde);padding:15px 16px 14px;position:relative;}
+.kpi::before{content:"";position:absolute;top:0;left:0;width:100%;height:3px;background:var(--negro);}
+.kpi .titulo{
+  font-size:10.5px;font-weight:900;text-transform:uppercase;letter-spacing:.09em;
+  color:var(--texto-tenue);margin-bottom:9px;
+}
+.kpi .valor{font-size:32px;font-weight:900;line-height:1;letter-spacing:-0.025em;}
+.kpi .unidad{font-size:12px;font-weight:700;color:var(--texto-tenue);margin-left:5px;}
+.kpi .pie{
+  margin-top:11px;padding-top:9px;border-top:1px solid var(--borde-fuerte);
+  font-size:11.5px;color:var(--texto-tenue);display:flex;flex-wrap:wrap;gap:4px 10px;
+}
+.kpi .secundario{
+  margin-top:9px;font-size:12.5px;color:var(--texto-tenue);
+}
+.kpi .secundario b{font-weight:900;color:var(--texto);font-size:15px;}
+.kpi.error{background:#FBF2F1;border-color:#E7C9C6;}
+.kpi.error::before{background:var(--negativo);}
+.kpi .msj-error{font-size:12px;color:var(--negativo);font-weight:700;line-height:1.35;}
+
+/* Variación interanual */
+.var{font-weight:900;white-space:nowrap;}
+.var.sube{color:var(--alerta);}
+.var.baja{color:var(--negativo);}
+.var.plana{color:var(--texto-tenue);}
+.var.nula{color:var(--texto-muy-tenue);font-weight:700;}
+.kpi .pie .var.sube{
+  background:var(--amarillo-suave);padding:1px 6px;border-radius:var(--radio);
+}
+
+/* Gráficos */
+.caja-grafico{position:relative;width:100%;height:330px;}
+.caja-grafico.alta{height:460px;}
+.grilla-2{display:grid;grid-template-columns:1.45fr 1fr;gap:16px;}
+
+/* Tablas */
+.envoltorio-tabla{overflow-x:auto;border:1px solid var(--borde);}
+table.datos{font-size:12.5px;min-width:720px;}
+table.datos thead th{
+  background:var(--negro);color:var(--blanco);font-weight:700;text-align:right;
+  padding:9px 11px;white-space:nowrap;position:sticky;top:0;z-index:2;
+  font-size:11px;text-transform:uppercase;letter-spacing:.05em;
+  border-bottom:2px solid var(--amarillo);
+}
+table.datos thead th.izq{text-align:left;}
+table.datos thead th.ordenable{cursor:pointer;user-select:none;}
+table.datos thead th.ordenable:hover{color:var(--amarillo);}
+table.datos thead th .ind{opacity:.35;margin-left:5px;font-size:9px;}
+table.datos thead th.ord-asc .ind,table.datos thead th.ord-desc .ind{opacity:1;color:var(--amarillo);}
+table.datos thead tr.grupo th{
+  background:#1C1C1C;border-bottom:1px solid #3A3A3A;text-align:center;
+  font-size:10px;letter-spacing:.09em;color:#D6D6D6;
+}
+table.datos tbody td{
+  padding:7px 11px;text-align:right;border-bottom:1px solid var(--borde);
+  font-variant-numeric:tabular-nums;white-space:nowrap;
+}
+table.datos tbody td.izq{text-align:left;font-weight:700;white-space:normal;min-width:170px;}
+table.datos tbody tr:nth-child(even){background:var(--superficie-alt);}
+table.datos tbody tr:hover{background:var(--amarillo-suave);}
+table.datos tfoot td{
+  padding:9px 11px;text-align:right;font-weight:900;
+  background:var(--superficie);border-top:2px solid var(--negro);
+  font-variant-numeric:tabular-nums;
+}
+table.datos tfoot td.izq{text-align:left;}
+td.sep-izq,th.sep-izq{border-left:1px solid var(--borde-fuerte);}
+
+/* Distinción visual: sin dato vs cero real */
+.sin-dato{color:var(--texto-muy-tenue);font-style:italic;font-weight:400;}
+.cero{color:var(--texto);font-weight:700;}
+
+/* Estados de carga y error */
+.esqueleto{background:linear-gradient(90deg,#EFEFEF 25%,#E2E2E2 37%,#EFEFEF 63%);
+  background-size:400% 100%;animation:brillo 1.3s ease-in-out infinite;border-radius:var(--radio);}
+@keyframes brillo{0%{background-position:100% 50%}100%{background-position:0 50%}}
+.esqueleto.linea{height:13px;margin-bottom:9px;}
+.esqueleto.bloque{height:300px;}
+#capa-carga{
+  position:fixed;inset:0;background:var(--blanco);z-index:400;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;
+}
+#capa-carga.oculta{display:none;}
+#capa-carga .aro{
+  width:38px;height:38px;border:3px solid var(--borde);border-top-color:var(--amarillo);
+  border-radius:50%;animation:girar .8s linear infinite;
+}
+@keyframes girar{to{transform:rotate(360deg)}}
+#capa-carga .txt{font-size:13px;font-weight:700;color:var(--texto-tenue);letter-spacing:.02em;}
+#capa-carga .detalle{font-size:11.5px;color:var(--texto-muy-tenue);}
+
+.bloque-error{
+  background:#FBF2F1;border:1px solid #E7C9C6;border-left:4px solid var(--negativo);
+  padding:15px 17px;font-size:13px;color:#7A1C16;
+}
+.bloque-error strong{display:block;font-weight:900;margin-bottom:4px;}
+.bloque-error code{font-size:11.5px;background:rgba(0,0,0,.05);padding:1px 5px;word-break:break-all;}
+
+.nota{font-size:11.5px;color:var(--texto-muy-tenue);margin-top:9px;line-height:1.45;}
+.vacio{padding:34px;text-align:center;color:var(--texto-muy-tenue);font-size:13px;}
+
+/* Leyenda de series */
+.leyenda{display:flex;gap:16px;align-items:center;font-size:11.5px;color:var(--texto-tenue);margin-bottom:10px;}
+.leyenda i{display:inline-block;width:13px;height:3px;margin-right:6px;vertical-align:middle;}
+
+/* ============================================================
+   RESPONSIVE (tablet)
+   ============================================================ */
+@media (max-width:1180px){
+  .grilla-2{grid-template-columns:1fr;}
+  .grilla-kpi{grid-template-columns:repeat(2,1fr);}
+}
+@media (max-width:820px){
+  main{padding:18px 14px 48px;}
+  #banner,#barra-filtros{padding-left:14px;padding-right:14px;}
+  #banner .marca span{display:none;}
+  .grilla-kpi{grid-template-columns:1fr;}
+  #chips-filtros{margin-left:0;width:100%;}
+  .encabezado-vista h1{font-size:21px;}
+}
+
+/* ============================================================
+   IMPRESIÓN / EXPORTACIÓN A PDF
+   Carta horizontal. Tablas como tablas reales, gráficos como canvas.
+   ============================================================ */
+#cabecera-impresion{display:none;}
+
+@media print{
+  @page{size:letter landscape;margin:11mm 10mm 12mm;}
+
+  html,body{background:#fff !important;font-size:9pt;}
+  /* Se ocultan los controles interactivos */
+  #cabecera,#barra-filtros,#capa-carga,#panel-advertencias,#btn-pdf,
+  .seccion > header select,.multi{display:none !important;}
+
+  main{padding:0;max-width:none;}
+  .vista{display:none !important;}
+  .vista.activa{display:block !important;}
+
+  /* Encabezado institucional del documento */
+  #cabecera-impresion{
+    display:block;border-bottom:3px solid #000;padding-bottom:7px;margin-bottom:12px;
+  }
+  #cabecera-impresion .fila-sup{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;}
+  #cabecera-impresion .inst{font-size:14pt;font-weight:900;line-height:1.1;letter-spacing:-.01em;}
+  #cabecera-impresion .inst span{
+    display:block;font-size:7.5pt;font-weight:700;text-transform:uppercase;
+    letter-spacing:.12em;color:#444;margin-top:2px;
+  }
+  #cabecera-impresion .der{text-align:right;font-size:7.5pt;color:#333;line-height:1.4;}
+  #cabecera-impresion .der b{display:block;font-size:10pt;color:#000;}
+  #cabecera-impresion .filtros{
+    margin-top:7px;font-size:7.5pt;color:#333;line-height:1.4;
+    border-top:1px solid #CCC;padding-top:5px;
+  }
+  #cabecera-impresion .filtros b{font-weight:900;color:#000;}
+
+  .encabezado-vista{margin-bottom:9px;}
+  .encabezado-vista h1{font-size:12pt;}
+  .encabezado-vista h1 .sub{font-size:7pt;}
+
+  /* Evitar cortes feos */
+  .seccion,.kpi,.envoltorio-tabla,.caja-grafico{break-inside:avoid;page-break-inside:avoid;}
+  .seccion{margin-bottom:11px;}
+  .seccion > header{padding:5px 9px;}
+  .seccion > header h2{font-size:8pt;}
+  .cuerpo-seccion{padding:9px;}
+
+  .grilla-kpi{grid-template-columns:repeat(4,1fr);gap:7px;margin-bottom:11px;}
+  .kpi{padding:8px 9px;}
+  .kpi .valor{font-size:16pt;}
+  .kpi .titulo{font-size:6.5pt;margin-bottom:5px;}
+  .kpi .pie,.kpi .secundario{font-size:7pt;}
+
+  .grilla-2{grid-template-columns:1.45fr 1fr;gap:10px;}
+  .caja-grafico{height:78mm;}
+  .caja-grafico.alta{height:92mm;}
+
+  table.datos{font-size:7pt;min-width:0;}
+  table.datos thead th{
+    padding:4px 5px;font-size:6.5pt;position:static;
+    background:#000 !important;color:#fff !important;
+    -webkit-print-color-adjust:exact;print-color-adjust:exact;
+  }
+  table.datos thead tr.grupo th{background:#2A2A2A !important;color:#EEE !important;}
+  table.datos tbody td{padding:3px 5px;}
+  table.datos tbody tr:hover{background:transparent;}
+  table.datos thead{display:table-header-group;}
+  table.datos tfoot td{padding:4px 5px;}
+
+  .aviso{
+    display:flex !important;background:#FFF4DC !important;
+    -webkit-print-color-adjust:exact;print-color-adjust:exact;
+    padding:6px 9px;font-size:7.5pt;margin-bottom:9px;
+  }
+  .aviso:not(.visible){display:none !important;}
+  .nota{font-size:6.5pt;}
+
+  /* Fondos de tarjetas y filas alternas fieles al pantalla */
+  .kpi,table.datos tbody tr:nth-child(even),table.datos tfoot td{
+    -webkit-print-color-adjust:exact;print-color-adjust:exact;
+  }
+  .var.sube,.var.baja{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+}
+</style>
+</head>
+<body>
+
+<!-- Encabezado que solo aparece en el PDF -->
+<div id="cabecera-impresion">
+  <div class="fila-sup">
+    <div class="inst">
+      Sistema de Bibliotecas Duoc UC
+      <span id="imp-vista">Resumen</span>
+    </div>
+    <div class="der">
+      Mes de reporte
+      <b id="imp-periodo">—</b>
+      Generado el <span id="imp-generado">—</span>
+    </div>
+  </div>
+  <div class="filtros"><b>Filtros aplicados:</b> <span id="imp-filtros">—</span></div>
+</div>
+
+<!-- ============================ CABECERA ============================ -->
+<header id="cabecera">
+  <div id="banner">
+    <div class="marca">
+      <strong>Bibliotecas Duoc UC</strong>
+      <span>Indicadores del Sistema de Bibliotecas</span>
+    </div>
+    <div class="espaciador"></div>
+    <button id="btn-advertencias" title="Advertencias de calidad de datos" aria-expanded="false">
+      &#9888;<span class="conteo" id="conteo-advertencias">0</span>
+    </button>
+    <div class="meta">
+      <b id="meta-periodo">Cargando…</b>
+      <span id="meta-actualizacion">Descargando datos</span>
+    </div>
+  </div>
+  <nav id="menu"></nav>
+</header>
+
+<div id="panel-advertencias">
+  <h4>Advertencias de calidad de datos</h4>
+  <ul id="lista-advertencias"></ul>
+</div>
+
+<!-- ============================ FILTROS ============================ -->
+<div id="barra-filtros">
+  <div class="grupo-filtro">
+    <label for="btn-sedes">Sede</label>
+    <div class="multi" id="multi-sedes">
+      <button id="btn-sedes" type="button" aria-expanded="false">
+        <span id="etq-sedes">Todas</span><span class="flecha">&#9660;</span>
+      </button>
+      <div class="multi-panel" id="panel-sedes">
+        <div class="acciones">
+          <button type="button" data-accion="todas">Todas</button>
+          <button type="button" data-accion="limpiar">Limpiar</button>
+        </div>
+        <div class="lista" id="lista-sedes"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="grupo-filtro">
+    <label for="sel-mes">Mes</label>
+    <select class="control" id="sel-mes"></select>
+  </div>
+
+  <div class="grupo-filtro">
+    <label for="sel-anio">Año</label>
+    <select class="control" id="sel-anio"></select>
+  </div>
+
+  <div id="chips-filtros"></div>
+  <button id="btn-pdf" type="button">Descargar PDF</button>
+</div>
+
+<main id="contenido"></main>
+
+<!-- ============================ CARGA ============================ -->
+<div id="capa-carga">
+  <div class="aro"></div>
+  <div class="txt">Cargando indicadores del Sistema de Bibliotecas</div>
+  <div class="detalle" id="detalle-carga">Descargando 4 hojas de datos…</div>
+</div>
+
+<script>
+"use strict";
+/* ==================================================================================
+   DASHBOARD DE INDICADORES · SISTEMA DE BIBLIOTECAS DUOC UC
+   Archivo único, sin build step. Datos en vivo desde Google Sheets publicado en CSV.
+   ================================================================================== */
+
+/* ==================================================================================
+   1. CONFIGURACIÓN
+   Todo lo que puede cambiar en el tiempo vive acá. No hace falta tocar la lógica
+   para agregar un indicador, cambiar una URL o ajustar la lista de sedes.
+   ================================================================================== */
+const CONFIG = {
+
+  institucion: "Sistema de Bibliotecas Duoc UC",
+
+  /* --------------------------------------------------------------------------------
+     ORIGEN DE LOS DATOS
+
+     Las hojas crudas del libro «FINAL» son bases transaccionales (137.942 préstamos,
+     153.065 accesos digitales, 26.917 participaciones): 68 MB en total, imposibles de
+     descargar en cada visita. Por eso el dashboard NO lee las hojas crudas, sino
+     cuatro pestañas RESUMEN generadas con fórmulas QUERY dentro del mismo libro.
+     Siguen siendo datos en vivo: al actualizarse la base, el resumen se recalcula solo.
+
+     Cómo obtener cada gid: publica la pestaña resumen (Archivo → Compartir → Publicar
+     en la web → elige la pestaña → formato CSV) y copia el número que aparece
+     después de «gid=» en la URL que entrega Google.
+
+     Las instrucciones y las fórmulas están en «guia-pestanas-resumen.md».
+     -------------------------------------------------------------------------------- */
+  libro: "2PACX-1vSnXomreT9d7YMgsZCsb8Gsm8MY58G9_AsukqaQfx2soRc3QT3L5j5xlVCCDGIpyaqp40_WM4wCKQkF",
+
+  /* --------------------------------------------------------------------------------
+     FORMATO DE FECHA DE LA FUENTE
+     Las hojas del libro usan M/D/AAAA (3/23/2026 = 23 de marzo), no el orden chileno.
+     Se verificó contra la columna «Mes» de cada hoja: 0 conflictos en 164.859 filas.
+     Cambia a "DMY" solo si en el futuro la fuente pasa a formato chileno.
+     -------------------------------------------------------------------------------- */
+  formatoFecha: "MDY",
+
+  /* --------------------------------------------------------------------------------
+     SEDES
+
+     `canonicas` es el nombre que se muestra en el dashboard.
+     `alias` corrige las diferencias de escritura entre hojas. Solo hacen falta
+     entradas cuando el nombre difiere de verdad: las diferencias de mayúsculas o
+     tildes («Viña Del Mar» / «Viña del Mar») ya se resuelven solas.
+     `excluidas` son registros que no representan una sede del sistema.
+     -------------------------------------------------------------------------------- */
+  sedes: {
+    canonicas: [
+      "Alameda", "Antonio Varas", "Arauco", "Campus Virtual", "Casa Central",
+      "Maipú", "Melipilla", "Nacimiento", "Padre Alonso de Ovalle", "Plaza Norte",
+      "Plaza Oeste", "Plaza Vespucio", "Puente Alto", "Puerto Montt",
+      "San Andrés de Concepción", "San Bernardo", "San Carlos de Apoquindo",
+      "San Joaquín", "Valparaíso", "Valparaíso LC", "Villarrica", "Viña del Mar"
+    ],
+
+    alias: {
+      "Campus Arauco":      "Arauco",
+      "Campus Nacimiento":  "Nacimiento",
+      "Campus Villarrica":  "Villarrica",
+      "Alonso Ovalle":      "Padre Alonso de Ovalle",
+      "Concepción":         "San Andrés de Concepción",
+      "San Carlos":         "San Carlos de Apoquindo",
+      // Typo en la fuente: aparece «Valparaísp» (con p final) en Préstamos y
+      // Acciones Formativas. Son 10.937 registros que sin esto quedarían aparte.
+      "Valparaísp":         "Valparaíso",
+      // POR CONFIRMAR: «Luis Cousiño» (Préstamos) y «Valparaíso LC» (Cuenta Personas)
+      // se tratan como la misma unidad. Si no lo son, borra esta línea.
+      "Luis Cousiño":       "Valparaíso LC"
+    },
+
+    excluidas: ["Liceo Andes (Renca)", "Quillota", "Educacion Continua",
+                "[No Aplica]", "[No Identificado]", "No Aplica", "No Identificado"]
+  },
+
+  /* --------------------------------------------------------------------------------
+     INDICADORES
+
+     `fuente.tipo`:
+       "detalle"  → pestaña con columnas  Sede | Fecha | Dimensión | Total
+       "matriz"   → sedes en filas y meses en columnas (la hoja Cuenta Personas)
+
+     `fuente.incluir`: valores de la columna Dimensión que se contabilizan.
+       null = todos. Es el interruptor para cambiar criterios sin tocar la lógica.
+     -------------------------------------------------------------------------------- */
+  indicadores: [
+    {
+      id: "prestamos_fisicos",
+      nombre: "Préstamos Físicos",
+      nombreCorto: "Préstamos",
+      unidad: "transacciones",
+      gid: "PEGAR_GID_resumen_prestamos",
+      fuente: {
+        tipo: "detalle",
+        col: { sede: "Sede", fecha: "Fecha", dimension: "Tipo", valor: "Total" },
+        etiquetaDimension: "Tipo de transacción",
+        /* Criterio vigente: TODAS las transacciones (137.942).
+           Para contar solo circulación efectiva (116.170 = préstamos + renovaciones,
+           que equivale exactamente a excluir «WORKFLOW - NO SUMAR»), reemplaza por:
+             incluir: ["PRESTAMO", "RENOVACION"]                                      */
+        incluir: null
+      },
+      metricas: [{ id: "valor", etiqueta: "Transacciones", origen: "suma" }],
+      nota: "Incluye todas las transacciones registradas: préstamos, renovaciones, uso en sala, exposiciones, préstamo intersede, digitalización y missing."
+    },
+    {
+      id: "transacciones_digitales",
+      nombre: "Transacciones Digitales",
+      nombreCorto: "T. Digital",
+      unidad: "accesos",
+      gid: "PEGAR_GID_resumen_digital",
+      fuente: {
+        tipo: "detalle",
+        col: { sede: "Sede", fecha: "Fecha", dimension: "Categoria", valor: "Total" },
+        etiquetaDimension: "Tipo de recurso",
+        incluir: null
+      },
+      metricas: [{ id: "valor", etiqueta: "Accesos", origen: "suma" }],
+      nota: "Cada registro es un acceso a un recurso digital, no un usuario único."
+    },
+    {
+      id: "cuenta_personas",
+      nombre: "Cuenta Personas",
+      nombreCorto: "Cuenta Personas",
+      unidad: "ingresos",
+      /* Esta hoja ya viene agregada en el libro; se lee tal cual, sin pestaña resumen. */
+      gid: "954330324",
+      fuente: {
+        tipo: "matriz",
+        col: { sede: "Sede" }
+      },
+      metricas: [{ id: "valor", etiqueta: "Ingresos", origen: "suma" }],
+      nota: "Conteo de ingresos registrados por los arcos de conteo; no equivale a personas únicas."
+    },
+    {
+      id: "acciones_formativas",
+      nombre: "Acciones Formativas",
+      nombreCorto: "Acciones Formativas",
+      unidad: "actividades",
+      gid: "PEGAR_GID_resumen_formativas",
+      fuente: {
+        tipo: "detalle",
+        /* Cada fila de la pestaña resumen es UNA actividad (sede + fecha + nombre
+           oficial), y la columna Asistentes trae cuántos participaron en ella. */
+        col: { sede: "Sede", fecha: "Fecha", dimension: "Actividad", valor: "Asistentes" },
+        etiquetaDimension: "Actividad",
+        incluir: null
+      },
+      metricas: [
+        { id: "actividades", etiqueta: "Actividades", origen: "filas" },
+        { id: "asistentes",  etiqueta: "Asistentes",  origen: "suma"  }
+      ],
+      nota: "Una actividad = combinación de sede, fecha y nombre oficial. Los asistentes son participaciones, no personas únicas (20.671 RUT distintos en 26.917 participaciones)."
+    }
+  ],
+
+  /* Textos que deben interpretarse como "sin dato" (no como cero). */
+  valoresSinDato: ["", "-", "--", "s/i", "s/d", "sin dato", "sin datos", "n/a", "na", "nd", "n/d", "null", "#n/a", "#¡div/0!", "#div/0!", "#value!", "#ref!", "."],
+
+  meses: ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"],
+  mesesCortos: ["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"],
+
+  colores: {
+    negro: "#000000",
+    amarillo: "#F5A800",
+    grisSerie: "#B5B5B5",
+    grisTenue: "#DCDCDC"
+  }
+};
+
+/* URL de una pestaña publicada del libro, a partir de su gid. */
+function urlHoja(gid){
+  return "https://docs.google.com/spreadsheets/d/e/" + CONFIG.libro +
+         "/pub?gid=" + gid + "&single=true&output=csv";
+}
+
+/* Alias de meses aceptados al leer encabezados o celdas de texto. */
+const ALIAS_MESES = {
+  ene:1, enero:1, jan:1, january:1,
+  feb:2, febrero:2, february:2,
+  mar:3, marzo:3, march:3,
+  abr:4, abril:4, apr:4, april:4,
+  may:5, mayo:5,
+  jun:6, junio:6, june:6,
+  jul:7, julio:7, july:7,
+  ago:8, agosto:8, aug:8, august:8,
+  sep:9, sept:9, septiembre:9, setiembre:9, september:9,
+  oct:10, octubre:10, october:10,
+  nov:11, noviembre:11, november:11,
+  dic:12, diciembre:12, dec:12, december:12
+};
+
+/* ==================================================================================
+   2. ESTADO GLOBAL
+   ================================================================================== */
+const ESTADO = {
+  /* datos[idIndicador] = { estado, error, filas:[{sede,anio,mes,metricas:{}}], sedes:Set, anios:Set } */
+  datos: {},
+  sedes: [],              // universo de sedes detectadas (orden alfabético)
+  anios: [],              // años detectados en los datos (ascendente)
+  advertencias: [],
+  vistaActiva: "resumen",
+  cargadoEn: null,
+  hayComparacion: false,  // true si existe más de un año en los datos
+  periodoReporte: null,   // {anio, mes} calculado automáticamente
+  periodoSolicitado: null,// último mes cerrado según el navegador (antes de retroceder)
+  retrocedio: false,
+  filtros: {
+    sedes: new Set(),     // vacío = todas
+    mes: null,
+    anio: null,
+    modoAnio: "actual"    // "actual" | "anterior" | "ambos"
+  },
+  graficos: {},           // instancias de Chart.js por id de canvas
+  orden: {}               // estado de ordenamiento por tabla
+};
+
+/* ==================================================================================
+   3. UTILIDADES
+   ================================================================================== */
+
+/** Normaliza texto: minúsculas, sin tildes, sin espacios extra. Para comparar encabezados. */
+function norm(t){
+  return String(t == null ? "" : t)
+    .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase().replace(/\s+/g, " ").trim();
+}
+
+/** Igual que norm() pero además elimina todo lo que no sea alfanumérico. */
+function clave(t){ return norm(t).replace(/[^a-z0-9]/g, ""); }
+
+/**
+ * Convierte un texto a número respetando la convención chilena.
+ * Devuelve null si es "sin dato" (celda vacía, texto no numérico, "s/i", etc.).
+ * Un "0" explícito devuelve 0, que es distinto de null.
+ */
+function parsearNumero(bruto){
+  if (bruto === null || bruto === undefined) return null;
+  if (typeof bruto === "number") return Number.isFinite(bruto) ? bruto : null;
+
+  let t = String(bruto).trim();
+  if (CONFIG.valoresSinDato.includes(norm(t))) return null;
+
+  // Se limpian símbolos de moneda, porcentajes y espacios (incl. no-rompibles).
+  t = t.replace(/[\s\u00a0\u202f]/g, "").replace(/[$%]/g, "");
+  if (t === "") return null;
+
+  const negativo = /^\(.*\)$/.test(t);        // (1.234) = negativo, formato contable
+  if (negativo) t = t.slice(1, -1);
+
+  const tienePunto = t.includes(".");
+  const tieneComa  = t.includes(",");
+
+  if (tienePunto && tieneComa){
+    // El separador decimal es el que aparece más a la derecha.
+    if (t.lastIndexOf(",") > t.lastIndexOf(".")) t = t.replace(/\./g, "").replace(",", ".");
+    else t = t.replace(/,/g, "");
+  } else if (tieneComa){
+    // Coma sola: decimal chileno, salvo que sea agrupación de miles tipo 1,234,567.
+    t = /^\d{1,3}(,\d{3})+$/.test(t) ? t.replace(/,/g, "") : t.replace(",", ".");
+  } else if (tienePunto){
+    // Punto solo: agrupación de miles si calza el patrón 1.234 / 1.234.567.
+    if (/^\d{1,3}(\.\d{3})+$/.test(t)) t = t.replace(/\./g, "");
+  }
+
+  if (!/^-?\d*\.?\d+$/.test(t)) return null;   // cualquier otro texto = sin dato
+  const n = parseFloat(t);
+  if (!Number.isFinite(n)) return null;
+  return negativo ? -n : n;
+}
+
+/**
+ * Interpreta un período desde una celda de texto.
+ * Acepta: 2026-06-01 · 01/06/2026 · 2026-06 · 202606 · "Junio 2026" · "jun-26" · "06/2026".
+ * Devuelve {anio, mes} o null.
+ */
+function parsearPeriodo(bruto, formato){
+  if (bruto === null || bruto === undefined) return null;
+
+  if (bruto instanceof Date && !isNaN(bruto)) {
+    return { anio: bruto.getFullYear(), mes: bruto.getMonth() + 1 };
+  }
+
+  const t = String(bruto).trim();
+  if (t === "") return null;
+  let m;
+
+  // ISO: 2026-06-01 · 2026/06/01 · 2026-06
+  m = t.match(/^(\d{4})[-\/.](\d{1,2})(?:[-\/.](\d{1,2}))?/);
+  if (m) return validaPeriodo(+m[1], +m[2]);
+
+  /* Dos números y un año: 3/23/2026 · 01-06-2026 · 1/2/2026
+     El orden lo define CONFIG.formatoFecha, porque «1/2/2026» es ambiguo por sí solo.
+     Las hojas del libro FINAL usan M/D/AAAA (verificado contra su columna «Mes»).
+     Si un campo supera 12, se deduce el orden sin ambigüedad y se ignora la config. */
+  m = t.match(/^(\d{1,2})[-\/.](\d{1,2})[-\/.](\d{2,4})/);
+  if (m){
+    let a = +m[3]; if (a < 100) a += 2000;
+    const p1 = +m[1], p2 = +m[2];
+    if (p1 > 12 && p2 <= 12) return validaPeriodo(a, p2);   // día primero, sin duda
+    if (p2 > 12 && p1 <= 12) return validaPeriodo(a, p1);   // mes primero, sin duda
+    return validaPeriodo(a, (formato || CONFIG.formatoFecha) === "MDY" ? p1 : p2);
+  }
+  m = t.match(/^(\d{1,2})[-\/.](\d{4})$/);            // 06/2026
+  if (m) return validaPeriodo(+m[2], +m[1]);
+
+  // Compacto: 202606
+  m = t.match(/^(\d{4})(\d{2})$/);
+  if (m) return validaPeriodo(+m[1], +m[2]);
+
+  // Nombre de mes + año: "Junio 2026" · "jun-2026" · "2026 junio"
+  const n = norm(t);
+  const conNombre = n.match(/^([a-z]+)\.?[\s\-\/]*(\d{2,4})$/) || n.match(/^(\d{4})[\s\-\/]*([a-z]+)\.?$/);
+  if (conNombre){
+    const esPrimeroTexto = isNaN(+conNombre[1]);
+    const txt = esPrimeroTexto ? conNombre[1] : conNombre[2];
+    let a = +(esPrimeroTexto ? conNombre[2] : conNombre[1]);
+    if (a < 100) a += 2000;
+    const mes = mesDesdeTexto(txt);
+    if (mes) return validaPeriodo(a, mes);
+  }
+
+  // Último recurso: que lo intente el motor de fechas del navegador.
+  const d = new Date(t);
+  if (!isNaN(d) && /\d{4}/.test(t)) return validaPeriodo(d.getFullYear(), d.getMonth() + 1);
+
+  return null;
+}
+function validaPeriodo(anio, mes){
+  if (!Number.isInteger(anio) || !Number.isInteger(mes)) return null;
+  if (anio < 1990 || anio > 2100 || mes < 1 || mes > 12) return null;
+  return { anio, mes };
+}
+
+/** Devuelve 1..12 a partir de un nombre o abreviatura de mes; null si no calza. */
+function mesDesdeTexto(txt){
+  const n = norm(txt).replace(/\./g, "").trim();
+  if (ALIAS_MESES[n]) return ALIAS_MESES[n];
+  const n3 = n.slice(0, 3);
+  return ALIAS_MESES[n3] || null;
+}
+
+/**
+ * Deduce si una columna de fechas viene en M/D/AAAA o D/M/AAAA mirando los datos.
+ * Solo concluye cuando hay evidencia: un componente mayor que 12 no deja lugar a dudas
+ * (23 no puede ser un mes). Devuelve {formato, prueba} o null si todo es ambiguo.
+ *
+ * Existe para que un cambio de configuración regional en Google Sheets no invierta
+ * día y mes en silencio: es la diferencia entre 47.408 filas bien o mal clasificadas.
+ */
+function detectarFormatoFecha(valores){
+  let evidenciaMDY = 0, evidenciaDMY = 0, ambiguas = 0;
+  for (const v of valores){
+    const m = String(v == null ? "" : v).trim().match(/^(\d{1,2})[-\/.](\d{1,2})[-\/.](\d{2,4})/);
+    if (!m) continue;
+    const p1 = +m[1], p2 = +m[2];
+    if (p1 > 12 && p2 <= 12) evidenciaDMY++;        // el primero es el día
+    else if (p2 > 12 && p1 <= 12) evidenciaMDY++;   // el primero es el mes
+    else ambiguas++;
+  }
+  if (evidenciaMDY === 0 && evidenciaDMY === 0) return null;
+  return {
+    formato: evidenciaMDY >= evidenciaDMY ? "MDY" : "DMY",
+    prueba: { mdy: evidenciaMDY, dmy: evidenciaDMY, ambiguas },
+    conflicto: evidenciaMDY > 0 && evidenciaDMY > 0
+  };
+}
+
+/* ---------- Formateo en convención chilena ---------- */
+const FMT_ENTERO  = new Intl.NumberFormat("es-CL", { maximumFractionDigits: 0 });
+const FMT_DECIMAL = new Intl.NumberFormat("es-CL", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+
+/** Formatea un número. null => marcador "sin dato" (distinto de un 0 real). */
+function fmt(n){
+  if (n === null || n === undefined || !Number.isFinite(n)) return '<span class="sin-dato">sin dato</span>';
+  if (n === 0) return '<span class="cero">0</span>';
+  return FMT_ENTERO.format(Math.round(n));
+}
+/** Versión en texto plano (para tooltips, atributos y ordenamiento). */
+function fmtTxt(n){
+  if (n === null || n === undefined || !Number.isFinite(n)) return "sin dato";
+  return FMT_ENTERO.format(Math.round(n));
+}
+
+/**
+ * Variación interanual. Devuelve null cuando no corresponde calcularla:
+ * año anterior sin dato o igual a 0 (evita divisiones por cero e infinitos).
+ */
+function variacion(actual, anterior){
+  if (actual === null || anterior === null || anterior === 0) return null;
+  return ((actual - anterior) / anterior) * 100;
+}
+
+/** Renderiza una variación como HTML con flecha y color. "n/a" cuando no aplica. */
+function htmlVariacion(v, conFlecha){
+  if (v === null) return '<span class="var nula" title="No calculable: el período de comparación no tiene dato o es 0">n/a</span>';
+  const cls = v > 0.05 ? "sube" : (v < -0.05 ? "baja" : "plana");
+  const flecha = conFlecha === false ? "" : (v > 0.05 ? "▲ " : (v < -0.05 ? "▼ " : "= "));
+  const signo = v > 0 ? "+" : "";
+  return '<span class="var ' + cls + '">' + flecha + signo + FMT_DECIMAL.format(v) + "%</span>";
+}
+
+/** Suma tratando null como ausencia: si no hay ningún valor, el total es null. */
+function sumar(valores){
+  let total = null;
+  for (const v of valores){
+    if (v === null || v === undefined || !Number.isFinite(v)) continue;
+    total = (total === null ? 0 : total) + v;
+  }
+  return total;
+}
+
+function escapar(t){
+  return String(t == null ? "" : t)
+    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+}
+
+function nombreMes(m){ return CONFIG.meses[m - 1] || "—"; }
+function etiquetaPeriodo(p){ return p ? nombreMes(p.mes) + " " + p.anio : "—"; }
+
+function registrarAdvertencia(tipo, texto){
+  // Se evitan duplicados exactos para no inflar el panel.
+  if (ESTADO.advertencias.some(a => a.tipo === tipo && a.texto === texto)) return;
+  ESTADO.advertencias.push({ tipo, texto });
+}
+
+/* ==================================================================================
+   4. CARGA Y PARSEO DE LOS CSV
+   ================================================================================== */
+
+/**
+ * Descarga las cuatro hojas en paralelo con Promise.allSettled: si una falla,
+ * el resto del dashboard sigue funcionando y esa sección muestra su propio error.
+ */
+async function cargarTodo(){
+  const promesas = CONFIG.indicadores.map(ind => descargarHoja(ind));
+  const resultados = await Promise.allSettled(promesas);
+
+  resultados.forEach((r, i) => {
+    const ind = CONFIG.indicadores[i];
+    if (r.status === "fulfilled"){
+      ESTADO.datos[ind.id] = r.value;
+    } else {
+      ESTADO.datos[ind.id] = {
+        estado: "error",
+        error: (r.reason && r.reason.message) ? r.reason.message : "Error desconocido",
+        filas: [], sedes: new Set(), anios: new Set()
+      };
+      registrarAdvertencia("Carga", "No se pudo cargar la hoja «" + ind.nombre + "»: " +
+        ((r.reason && r.reason.message) ? r.reason.message : "error desconocido"));
+    }
+  });
+
+  ESTADO.cargadoEn = new Date();
+  consolidarUniverso();
+}
+
+/** ¿El dashboard se está ejecutando desde el disco en vez de desde un servidor web? */
+function esOrigenLocal(){
+  try {
+    return location.protocol === "file:" || location.origin === "null" || location.origin === "";
+  } catch (e){ return false; }
+}
+
+async function descargarHoja(ind){
+  /* Los gid de las pestañas resumen hay que pegarlos en CONFIG después de publicarlas. */
+  if (/^PEGAR_GID/.test(ind.gid)){
+    throw new Error("Falta configurar el gid de la pestaña resumen de este indicador. " +
+      "Crea la pestaña con la fórmula de «guia-pestanas-resumen.md», publícala como CSV " +
+      "y pega su gid en CONFIG.indicadores.");
+  }
+  const url = urlHoja(ind.gid);
+  let texto;
+  try {
+    const resp = await fetch(url, { cache: "no-store", redirect: "follow" });
+    if (!resp.ok) throw new Error("HTTP " + resp.status + " " + resp.statusText);
+    texto = await resp.text();
+  } catch (e){
+    /* Abrir el archivo con doble clic (file://) hace que el navegador use origen
+       «null» y Google bloquea la petición por CORS. Es la causa más habitual de
+       «Failed to fetch», y no tiene nada que ver con la publicación de la hoja. */
+    if (esOrigenLocal()){
+      throw new Error("El navegador bloqueó la descarga porque el dashboard se abrió como archivo local (file://). " +
+        "Necesita ejecutarse desde un servidor web: súbelo a GitHub Pages o levanta un servidor local.");
+    }
+    throw new Error("No se pudo descargar el CSV (" + e.message + "). Verifica que la hoja siga publicada en la web.");
+  }
+
+  // Google devuelve HTML cuando la publicación fue revocada o el gid no existe.
+  if (/^\s*<(!doctype|html)/i.test(texto)){
+    throw new Error("La URL no devolvió un CSV. Es probable que la hoja ya no esté publicada o que el gid haya cambiado.");
+  }
+
+  const parsed = Papa.parse(texto, {
+    header: false,          // se leen los encabezados a mano para poder saltar filas de título
+    skipEmptyLines: "greedy",
+    dynamicTyping: false    // todo como texto: el parseo numérico es propio
+  });
+
+  if (!parsed.data || parsed.data.length === 0) throw new Error("La hoja está vacía.");
+
+  return interpretarHoja(ind, parsed.data);
+}
+
+/* ----------------------------------------------------------------------------------
+   INTERPRETACIÓN DE LAS HOJAS
+
+   Se soportan dos formas, declaradas en CONFIG.indicadores[].fuente.tipo:
+
+     "detalle"  Pestaña resumen generada con QUERY en el propio libro.
+                Columnas: Sede | Fecha | Dimensión | Total
+                Una fila por sede, día y categoría. Es el formato de Préstamos,
+                T. Digital y Acciones Formativas.
+
+     "matriz"   Sedes en las filas y meses en las columnas, con filas de título
+                arriba y una fila «Total» al final. Es la hoja Cuenta Personas
+                tal como ya existe en el libro.
+   ---------------------------------------------------------------------------------- */
+function interpretarHoja(ind, matriz){
+  return ind.fuente.tipo === "matriz"
+    ? interpretarMatriz(ind, matriz)
+    : interpretarDetalle(ind, matriz);
+}
+
+/* ---------- Formato "detalle": Sede | Fecha | Dimensión | Total ---------- */
+function interpretarDetalle(ind, matriz){
+  const idxEnc = buscarEncabezado(matriz, [ind.fuente.col.sede, "sede"]);
+  if (idxEnc === -1){
+    throw new Error("No se encontró la fila de encabezados. Se esperaba una pestaña resumen con las columnas " +
+      Object.values(ind.fuente.col).join(", ") + ". ¿Apunta el gid a la pestaña resumen y no a la hoja cruda?");
+  }
+
+  const enc = matriz[idxEnc].map(c => String(c == null ? "" : c).trim());
+  const iSede = buscarColumna(enc, ind.fuente.col.sede, ["sede", "biblioteca", "campus"]);
+  const iFecha = buscarColumna(enc, ind.fuente.col.fecha, ["fecha", "dia", "periodo"]);
+  const iDim = buscarColumna(enc, ind.fuente.col.dimension, []);
+  const iValor = buscarColumna(enc, ind.fuente.col.valor, ["total", "cantidad", "conteo", "asistentes"]);
+
+  if (iSede === -1 || iFecha === -1 || iValor === -1){
+    throw new Error("Faltan columnas en la pestaña resumen. Encabezados leídos: " +
+      enc.filter(Boolean).join(" | "));
+  }
+
+  /* Se deduce el orden día/mes desde los propios datos antes de parsear nada. */
+  const muestra = [];
+  for (let i = idxEnc + 1; i < matriz.length && muestra.length < 4000; i++){
+    if (matriz[i] && matriz[i][iFecha] != null) muestra.push(matriz[i][iFecha]);
+  }
+  const det = detectarFormatoFecha(muestra);
+  let formatoFecha = CONFIG.formatoFecha;
+  if (det){
+    if (det.conflicto){
+      registrarAdvertencia("Fechas", ind.nombre + ": la columna de fecha mezcla los dos órdenes (" +
+        det.prueba.mdy + " filas prueban M/D y " + det.prueba.dmy + " prueban D/M). " +
+        "Hay que uniformar el formato en la planilla; se usó " + det.formato + ".");
+    } else if (det.formato !== CONFIG.formatoFecha){
+      registrarAdvertencia("Fechas", ind.nombre + ": las fechas vienen en " + det.formato +
+        " y la configuración dice " + CONFIG.formatoFecha + ". Se usó " + det.formato +
+        " porque los datos lo demuestran (" + FMT_ENTERO.format(det.prueba.mdy + det.prueba.dmy) +
+        " filas con un valor mayor que 12). Conviene actualizar CONFIG.formatoFecha.");
+    }
+    formatoFecha = det.formato;
+  }
+
+  const filas = [];
+  const sedes = new Set(), anios = new Set(), dimensiones = new Set();
+  let omitidasSede = 0, omitidasFecha = 0, omitidasDim = 0, excluidas = 0;
+
+  for (let i = idxEnc + 1; i < matriz.length; i++){
+    const f = matriz[i];
+    if (!f || f.every(c => String(c == null ? "" : c).trim() === "")) continue;
+
+    const sedeBruta = String(f[iSede] == null ? "" : f[iSede]).trim();
+    if (sedeBruta === "") continue;
+    if (esFilaTotal(sedeBruta)) continue;
+
+    const sede = normalizarSede(sedeBruta);
+    if (sede === null){ excluidas++; continue; }        // unidad excluida por configuración
+    if (sede === undefined){ omitidasSede++; continue; }
+
+    const periodo = parsearPeriodo(f[iFecha], formatoFecha);
+    if (!periodo){ omitidasFecha++; continue; }
+
+    /* Filtro por dimensión (p. ej. qué tipos de transacción se contabilizan). */
+    const dim = iDim === -1 ? "" : String(f[iDim] == null ? "" : f[iDim]).trim();
+    if (dim) dimensiones.add(dim);
+    if (ind.fuente.incluir && !ind.fuente.incluir.some(v => norm(v) === norm(dim))){ omitidasDim++; continue; }
+
+    const val = parsearNumero(f[iValor]);
+
+    /* Se emite un registro por métrica según su origen:
+         "suma"  -> acumula el valor de la columna Total
+         "filas" -> cuenta cuántas filas hay (una actividad por fila)              */
+    const metricas = {};
+    ind.metricas.forEach(m => {
+      metricas[m.id] = (m.origen === "filas") ? 1 : val;
+    });
+
+    filas.push({ sede, anio: periodo.anio, mes: periodo.mes, metricas });
+    sedes.add(sede);
+    anios.add(periodo.anio);
+  }
+
+  if (filas.length === 0){
+    throw new Error("La pestaña se leyó pero no quedó ninguna fila utilizable. " +
+      "Revisa que tenga datos y que las columnas se llamen como espera la configuración.");
+  }
+
+  registrarOmisiones(ind, { omitidasSede, omitidasFecha, omitidasDim, excluidas });
+
+  return {
+    estado: "ok", error: null, layout: "detalle",
+    filas: consolidarFilas(filas, ind),
+    sedes, anios,
+    dimensiones: [...dimensiones].sort((a, b) => a.localeCompare(b, "es")),
+    columnasDetectadas: "sede → «" + enc[iSede] + "» · fecha → «" + enc[iFecha] + "»" +
+      (iDim !== -1 ? " · " + (ind.fuente.etiquetaDimension || "dimensión") + " → «" + enc[iDim] + "»" : "") +
+      " · valor → «" + enc[iValor] + "»"
+  };
+}
+
+/* ---------- Formato "matriz": sedes en filas, meses en columnas ---------- */
+function interpretarMatriz(ind, matriz){
+  const idxEnc = buscarEncabezado(matriz, [ind.fuente.col.sede, "sede"]);
+  if (idxEnc === -1) throw new Error("No se encontró la fila de encabezados con la columna de sede.");
+
+  const enc = matriz[idxEnc].map(c => String(c == null ? "" : c).trim());
+  const iSede = buscarColumna(enc, ind.fuente.col.sede, ["sede", "biblioteca", "campus"]);
+
+  /* Columnas cuyo encabezado es un mes. */
+  const colsMes = [];
+  enc.forEach((h, i) => {
+    if (i === iSede || !h) return;
+    const mes = mesDesdeTexto(h);
+    if (mes) colsMes.push({ i, mes });
+  });
+  if (colsMes.length === 0) throw new Error("No se reconoció ninguna columna de mes en: " + enc.filter(Boolean).join(" | "));
+
+  /* El año: una columna suelta con 4 dígitos (que además es el total anual y se
+     ignora como dato mensual), o un año escrito en las filas de título de arriba. */
+  let anio = null;
+  const colAnio = enc.findIndex((h, i) => i !== iSede && /^(19|20)\d{2}$/.test(String(h).trim()));
+  if (colAnio !== -1) anio = +enc[colAnio].trim();
+  if (anio === null){
+    for (let i = 0; i < idxEnc; i++){
+      const m = (matriz[i] || []).join(" ").match(/(19|20)\d{2}/);
+      if (m){ anio = +m[0]; break; }
+    }
+  }
+  if (anio === null){
+    anio = new Date().getFullYear();
+    registrarAdvertencia("Formato", ind.nombre + ": no se pudo determinar el año de la hoja; se asumió " + anio +
+      ". Conviene que el encabezado incluya el año, como la columna de total anual.");
+  }
+
+  const filas = [];
+  const sedes = new Set(), anios = new Set();
+  let excluidas = 0, omitidasSede = 0;
+
+  for (let i = idxEnc + 1; i < matriz.length; i++){
+    const f = matriz[i];
+    if (!f || f.every(c => String(c == null ? "" : c).trim() === "")) continue;
+
+    const sedeBruta = String(f[iSede] == null ? "" : f[iSede]).trim();
+    if (sedeBruta === "" || esFilaTotal(sedeBruta)) continue;
+
+    const sede = normalizarSede(sedeBruta);
+    if (sede === null){ excluidas++; continue; }
+    if (sede === undefined){ omitidasSede++; continue; }
+
+    colsMes.forEach(cm => {
+      const bruto = f[cm.i];
+      /* Celda vacía = el mes aún no ocurrió: no se emite registro.
+         Un texto no numérico sí se emite como «sin dato», que es distinto. */
+      if (String(bruto == null ? "" : bruto).trim() === "") return;
+      const metricas = {};
+      ind.metricas.forEach(m => { metricas[m.id] = parsearNumero(bruto); });
+      filas.push({ sede, anio, mes: cm.mes, metricas });
+    });
+    sedes.add(sede);
+    anios.add(anio);
+  }
+
+  if (filas.length === 0) throw new Error("No se pudo leer ninguna sede con datos mensuales.");
+  registrarOmisiones(ind, { omitidasSede, omitidasFecha: 0, omitidasDim: 0, excluidas });
+
+  return {
+    estado: "ok", error: null, layout: "matriz",
+    filas: consolidarFilas(filas, ind),
+    sedes, anios, dimensiones: [],
+    columnasDetectadas: "sede → «" + enc[iSede] + "» · " + colsMes.length + " columnas de mes · año " + anio
+  };
+}
+
+/* ---------- Apoyos ---------- */
+
+/** Primera fila que contenga alguno de los encabezados buscados (tolera títulos arriba). */
+function buscarEncabezado(matriz, candidatos){
+  const limite = Math.min(matriz.length, 15);
+  for (let i = 0; i < limite; i++){
+    const fila = (matriz[i] || []).map(c => norm(c));
+    const tiene = candidatos.some(c => fila.some(h => h === norm(c) || h.includes(norm(c))));
+    const suficiente = fila.filter(h => h !== "").length >= 2;
+    if (tiene && suficiente) return i;
+  }
+  return -1;
+}
+
+/** Índice de una columna: primero por nombre exacto, después por palabras clave. */
+function buscarColumna(enc, nombre, alternativas){
+  if (nombre){
+    const exacto = enc.findIndex(h => norm(h) === norm(nombre));
+    if (exacto !== -1) return exacto;
+  }
+  for (const alt of (alternativas || [])){
+    const i = enc.findIndex(h => h && norm(h).includes(norm(alt)));
+    if (i !== -1) return i;
+  }
+  return -1;
+}
+
+function esFilaTotal(txt){
+  return ["total", "totales", "total general", "suma", "total sistema", "sistema", "resultado"]
+    .includes(norm(txt));
+}
+
+/**
+ * Lleva el nombre de sede a su forma canónica.
+ * Devuelve:  el nombre canónico  ·  null si está excluida  ·  undefined si no se reconoce
+ * (en ese caso igual se incorpora, pero queda anotada en las advertencias).
+ */
+function normalizarSede(bruta){
+  const k = clave(bruta);
+  if (MAPA_SEDES.excluidas.has(k)) return null;
+  const canon = MAPA_SEDES.directo.get(k);
+  if (canon) return canon;
+  registrarAdvertencia("Sede", "«" + bruta + "» no está en la lista de sedes configurada. " +
+    "Se incluye en los totales con ese mismo nombre; si es una variante de escritura, agrégala a CONFIG.sedes.alias.");
+  return bruta;
+}
+
+/* Índice de búsqueda de sedes, construido una sola vez a partir de CONFIG. */
+const MAPA_SEDES = (function(){
+  const directo = new Map(), excluidas = new Set();
+  CONFIG.sedes.canonicas.forEach(s => directo.set(clave(s), s));
+  Object.entries(CONFIG.sedes.alias).forEach(([desde, hacia]) => directo.set(clave(desde), hacia));
+  CONFIG.sedes.excluidas.forEach(s => excluidas.add(clave(s)));
+  return { directo, excluidas };
+})();
+
+/** Anota en el panel de advertencias las filas que no se pudieron usar. */
+function registrarOmisiones(ind, o){
+  if (o.omitidasFecha) registrarAdvertencia("Datos", ind.nombre + ": " + FMT_ENTERO.format(o.omitidasFecha) +
+    " filas sin fecha interpretable quedaron fuera del cálculo.");
+  if (o.omitidasSede) registrarAdvertencia("Datos", ind.nombre + ": " + FMT_ENTERO.format(o.omitidasSede) +
+    " filas sin sede quedaron fuera del cálculo.");
+  if (o.excluidas) registrarAdvertencia("Datos", ind.nombre + ": " + FMT_ENTERO.format(o.excluidas) +
+    " filas corresponden a unidades excluidas en la configuración (" + CONFIG.sedes.excluidas.join(", ") + ").");
+  if (o.omitidasDim && ind.fuente.incluir) registrarAdvertencia("Criterio", ind.nombre + ": " +
+    FMT_ENTERO.format(o.omitidasDim) + " filas quedaron fuera por el filtro de " +
+    (ind.fuente.etiquetaDimension || "categoría").toLowerCase() + " (se cuentan solo: " + ind.fuente.incluir.join(", ") + ").");
+}
+
+/** Suma registros repetidos de la misma sede/año/mes en un único registro. */
+function consolidarFilas(filas, ind){
+  const mapa = new Map();
+  for (const f of filas){
+    const k = f.sede + "||" + f.anio + "||" + f.mes;
+    if (!mapa.has(k)){
+      const base = { sede: f.sede, anio: f.anio, mes: f.mes, metricas: {} };
+      ind.metricas.forEach(m => { base.metricas[m.id] = undefined; });
+      mapa.set(k, base);
+    }
+    const dest = mapa.get(k);
+    for (const [idMet, val] of Object.entries(f.metricas)){
+      if (val === null || val === undefined){
+        if (dest.metricas[idMet] === undefined) dest.metricas[idMet] = null;   // sin dato explícito
+      } else {
+        dest.metricas[idMet] = (dest.metricas[idMet] === undefined || dest.metricas[idMet] === null)
+          ? val : dest.metricas[idMet] + val;
+      }
+    }
+  }
+  const salida = [];
+  for (const r of mapa.values()){
+    ind.metricas.forEach(m => { if (r.metricas[m.id] === undefined) r.metricas[m.id] = null; });
+    salida.push(r);
+  }
+  return salida;
+}
+
+/* ==================================================================================
+   5. CONSOLIDACIÓN DEL UNIVERSO DE DATOS
+   ================================================================================== */
+function consolidarUniverso(){
+  const sedes = new Set();
+  const anios = new Set();
+
+  CONFIG.indicadores.forEach(ind => {
+    const d = ESTADO.datos[ind.id];
+    if (!d || d.estado !== "ok") return;
+    d.sedes.forEach(s => sedes.add(s));
+    d.anios.forEach(a => anios.add(a));
+    registrarAdvertencia("Lectura", ind.nombre + ": " + d.columnasDetectadas +
+      " · " + FMT_ENTERO.format(d.filas.length) + " registros mensuales.");
+  });
+
+  /* Orden: primero las sedes canónicas en el orden de CONFIG, después cualquier
+     nombre inesperado que haya aparecido en los datos (que igual se contabiliza). */
+  const canonicas = CONFIG.sedes.canonicas.filter(s => sedes.has(s));
+  const extras = [...sedes].filter(s => !CONFIG.sedes.canonicas.includes(s))
+                           .sort((a, b) => a.localeCompare(b, "es"));
+  ESTADO.sedes = canonicas.concat(extras);
+  ESTADO.anios = [...anios].sort((a, b) => a - b);
+  ESTADO.hayComparacion = ESTADO.anios.length > 1;
+
+  /* Sedes configuradas que no aparecieron en ninguna hoja. */
+  const ausentes = CONFIG.sedes.canonicas.filter(s => !sedes.has(s));
+  if (ausentes.length){
+    registrarAdvertencia("Sede", "Sin datos en ninguna hoja: " + ausentes.join(", ") + ".");
+  }
+
+  /* Cobertura por indicador: útil para detectar una sede que dejó de reportar. */
+  CONFIG.indicadores.forEach(ind => {
+    const d = ESTADO.datos[ind.id];
+    if (!d || d.estado !== "ok") return;
+    const faltan = ESTADO.sedes.filter(s => !d.sedes.has(s));
+    if (faltan.length){
+      registrarAdvertencia("Cobertura", ind.nombre + " no tiene registros de: " + faltan.join(", ") + ".");
+    }
+  });
+
+  if (!ESTADO.hayComparacion && ESTADO.anios.length === 1){
+    registrarAdvertencia("Comparación", "Los datos contienen un solo año (" + ESTADO.anios[0] +
+      "). Las comparaciones interanuales están desactivadas y se activarán solas cuando el libro incluya el año anterior.");
+  }
+
+  calcularPeriodoReporte();
+}
+
+/* ==================================================================================
+   6. MES DE REPORTE (último mes cerrado, con retroceso si no hay datos)
+   ================================================================================== */
+
+/** Último mes cerrado según el reloj del navegador: en julio devuelve junio. */
+function ultimoMesCerrado(){
+  const hoy = new Date();
+  const d = new Date(hoy.getFullYear(), hoy.getMonth() - 1, 1);
+  return { anio: d.getFullYear(), mes: d.getMonth() + 1 };
+}
+
+/** ¿Existe al menos un dato numérico para ese período en alguna hoja? */
+function hayDatosEn(anio, mes){
+  return CONFIG.indicadores.some(ind => {
+    const d = ESTADO.datos[ind.id];
+    if (!d || d.estado !== "ok") return false;
+    return d.filas.some(f => f.anio === anio && f.mes === mes &&
+      Object.values(f.metricas).some(v => v !== null && Number.isFinite(v)));
+  });
+}
+
+/**
+ * Fija el mes de reporte. Nunca hay un mes hardcodeado: parte del último mes cerrado
+ * y, si aún no hay datos cargados, retrocede hasta el último mes con información.
+ */
+function calcularPeriodoReporte(){
+  const objetivo = ultimoMesCerrado();
+  ESTADO.periodoSolicitado = objetivo;
+
+  if (hayDatosEn(objetivo.anio, objetivo.mes)){
+    ESTADO.periodoReporte = objetivo;
+    ESTADO.retrocedio = false;
+  } else {
+    let anio = objetivo.anio, mes = objetivo.mes, encontrado = null;
+    for (let i = 0; i < 36; i++){            // se retrocede hasta 3 años
+      mes--; if (mes === 0){ mes = 12; anio--; }
+      if (hayDatosEn(anio, mes)){ encontrado = { anio, mes }; break; }
+    }
+    ESTADO.periodoReporte = encontrado || objetivo;
+    ESTADO.retrocedio = !!encontrado;
+    if (encontrado){
+      registrarAdvertencia("Período", "El último mes cerrado (" + etiquetaPeriodo(objetivo) +
+        ") todavía no tiene datos cargados. Se muestra " + etiquetaPeriodo(encontrado) + ".");
+    } else {
+      registrarAdvertencia("Período", "No se encontraron datos para ningún mes reciente.");
+    }
+  }
+
+  // Los filtros parten alineados al mes de reporte.
+  ESTADO.filtros.mes  = ESTADO.periodoReporte.mes;
+  ESTADO.filtros.anio = ESTADO.periodoReporte.anio;
+}
+
+/* ==================================================================================
+   7. CONSULTA Y AGREGACIÓN (todo en memoria; nunca se recargan los CSV)
+   ================================================================================== */
+
+/** Sedes actualmente visibles según el filtro (vacío = todas). */
+function sedesVisibles(){
+  return ESTADO.filtros.sedes.size === 0 ? ESTADO.sedes : ESTADO.sedes.filter(s => ESTADO.filtros.sedes.has(s));
+}
+function sedeVisible(s){
+  return ESTADO.filtros.sedes.size === 0 || ESTADO.filtros.sedes.has(s);
+}
+
+/**
+ * Valor agregado de una métrica.
+ * @param {string} idInd  indicador
+ * @param {string} idMet  métrica
+ * @param {object} o      { anio, mes, sede, hastaMes }  (mes null = todo el año)
+ */
+function valor(idInd, idMet, o){
+  const d = ESTADO.datos[idInd];
+  if (!d || d.estado !== "ok") return null;
+  const valores = [];
+  for (const f of d.filas){
+    if (o.anio !== undefined && o.anio !== null && f.anio !== o.anio) continue;
+    if (o.mes  !== undefined && o.mes  !== null && f.mes  !== o.mes)  continue;
+    if (o.hastaMes !== undefined && o.hastaMes !== null && f.mes > o.hastaMes) continue;
+    if (o.sede) { if (f.sede !== o.sede) continue; }
+    else if (!sedeVisible(f.sede)) continue;
+    const v = f.metricas[idMet];
+    if (v !== null && v !== undefined && Number.isFinite(v)) valores.push(v);
+  }
+  return valores.length === 0 ? null : sumar(valores);
+}
+
+/** Serie de 12 meses para un indicador/métrica/año, respetando el filtro de sedes. */
+function serieMensual(idInd, idMet, anio){
+  const serie = new Array(12).fill(null);
+  const d = ESTADO.datos[idInd];
+  if (!d || d.estado !== "ok") return serie;
+  for (const f of d.filas){
+    if (f.anio !== anio) continue;
+    if (!sedeVisible(f.sede)) continue;
+    const v = f.metricas[idMet];
+    if (v === null || v === undefined || !Number.isFinite(v)) continue;
+    serie[f.mes - 1] = (serie[f.mes - 1] === null ? 0 : serie[f.mes - 1]) + v;
+  }
+  return serie;
+}
+
+/** Año de referencia y de comparación según el filtro de año. */
+function aniosDeTrabajo(){
+  const ref = ESTADO.filtros.anio;
+  const prev = ref - 1;
+  return { ref, prev, hayPrev: ESTADO.anios.includes(prev) };
+}
+</script>
+
+<script>
+"use strict";
+/* ==================================================================================
+   8. CONSTRUCCIÓN DEL DOM (menú y contenedores de vista)
+   ================================================================================== */
+
+/** Definición de las vistas: Resumen + una por indicador. */
+function vistas(){
+  return [{ id: "resumen", etiqueta: "Resumen", indicador: null }]
+    .concat(CONFIG.indicadores.map(i => ({ id: i.id, etiqueta: i.nombreCorto, indicador: i })));
+}
+
+function construirMenu(){
+  const nav = document.getElementById("menu");
+  nav.innerHTML = "";
+  vistas().forEach(v => {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.textContent = v.etiqueta;
+    b.dataset.vista = v.id;
+    b.className = v.id === ESTADO.vistaActiva ? "activo" : "";
+    b.addEventListener("click", () => cambiarVista(v.id));
+    nav.appendChild(b);
+  });
+}
+
+function construirContenedores(){
+  const main = document.getElementById("contenido");
+  main.innerHTML = vistas().map(v =>
+    '<section class="vista' + (v.id === ESTADO.vistaActiva ? " activa" : "") + '" id="vista-' + v.id + '"></section>'
+  ).join("");
+}
+
+function cambiarVista(id){
+  ESTADO.vistaActiva = id;
+  document.querySelectorAll("#menu button").forEach(b => b.classList.toggle("activo", b.dataset.vista === id));
+  document.querySelectorAll(".vista").forEach(s => s.classList.toggle("activa", s.id === "vista-" + id));
+  renderizar();
+  window.scrollTo({ top: 0, behavior: "instant" in window ? "instant" : "auto" });
+}
+
+/* ==================================================================================
+   9. FILTROS
+   ================================================================================== */
+function construirFiltros(){
+  /* --- Sedes: selección múltiple --- */
+  const lista = document.getElementById("lista-sedes");
+  lista.innerHTML = ESTADO.sedes.map(s =>
+    '<label><input type="checkbox" value="' + escapar(s) + '"><span>' + escapar(s) + "</span></label>"
+  ).join("") || '<div class="vacio" style="padding:16px">Sin sedes detectadas</div>';
+
+  lista.addEventListener("change", e => {
+    if (e.target.type !== "checkbox") return;
+    const v = e.target.value;
+    if (e.target.checked) ESTADO.filtros.sedes.add(v); else ESTADO.filtros.sedes.delete(v);
+    // Si quedaron todas marcadas, equivale a "Todas" (conjunto vacío).
+    if (ESTADO.filtros.sedes.size === ESTADO.sedes.length) ESTADO.filtros.sedes.clear();
+    actualizarEtiquetaSedes();
+    renderizar();
+  });
+
+  document.querySelectorAll("#panel-sedes .acciones button").forEach(b => {
+    b.addEventListener("click", () => {
+      ESTADO.filtros.sedes.clear();   // "Todas" y "Limpiar" resultan en el mismo estado base
+      lista.querySelectorAll("input").forEach(i => { i.checked = false; });
+      actualizarEtiquetaSedes();
+      renderizar();
+    });
+  });
+
+  const btnSedes = document.getElementById("btn-sedes");
+  btnSedes.addEventListener("click", e => {
+    e.stopPropagation();
+    const p = document.getElementById("panel-sedes");
+    const abierto = p.classList.toggle("abierto");
+    btnSedes.setAttribute("aria-expanded", String(abierto));
+  });
+  document.getElementById("panel-sedes").addEventListener("click", e => e.stopPropagation());
+
+  /* --- Mes --- */
+  const selMes = document.getElementById("sel-mes");
+  selMes.innerHTML = CONFIG.meses.map((m, i) =>
+    '<option value="' + (i + 1) + '"' + (i + 1 === ESTADO.filtros.mes ? " selected" : "") + ">" + m + "</option>"
+  ).join("");
+  selMes.addEventListener("change", () => { ESTADO.filtros.mes = +selMes.value; renderizar(); });
+
+  /* --- Año --- */
+  const selAnio = document.getElementById("sel-anio");
+  const opciones = [];
+  ESTADO.anios.slice().reverse().forEach(a => {
+    opciones.push('<option value="a:' + a + '"' + (a === ESTADO.filtros.anio ? " selected" : "") + ">" + a + "</option>");
+  });
+  if (ESTADO.hayComparacion) opciones.push('<option value="ambos">Comparar ambos</option>');
+  selAnio.innerHTML = opciones.join("") || '<option value="">—</option>';
+  selAnio.addEventListener("change", () => {
+    const v = selAnio.value;
+    if (v === "ambos"){
+      ESTADO.filtros.modoAnio = "ambos";
+      ESTADO.filtros.anio = ESTADO.anios[ESTADO.anios.length - 1];
+    } else {
+      ESTADO.filtros.modoAnio = "actual";
+      ESTADO.filtros.anio = +v.split(":")[1];
+    }
+    renderizar();
+  });
+
+  actualizarEtiquetaSedes();
+
+  /* Cierre de menús desplegables al hacer clic fuera. */
+  document.addEventListener("click", () => {
+    document.getElementById("panel-sedes").classList.remove("abierto");
+    document.getElementById("btn-sedes").setAttribute("aria-expanded", "false");
+    document.getElementById("panel-advertencias").classList.remove("abierto");
+  });
+}
+
+function actualizarEtiquetaSedes(){
+  const n = ESTADO.filtros.sedes.size;
+  const etq = document.getElementById("etq-sedes");
+  etq.textContent = n === 0
+    ? "Todas (" + ESTADO.sedes.length + ")"
+    : (n === 1 ? [...ESTADO.filtros.sedes][0] : n + " sedes seleccionadas");
+}
+
+/** Chips que muestran explícitamente qué filtros están activos. */
+function renderizarChips(){
+  const cont = document.getElementById("chips-filtros");
+  const n = ESTADO.filtros.sedes.size;
+  const chips = [];
+
+  chips.push('<span class="chip' + (n > 0 ? " acento" : "") + '">Sedes: <b>' +
+    (n === 0 ? "todas (" + ESTADO.sedes.length + ")" : n + " de " + ESTADO.sedes.length) + "</b></span>");
+
+  const esMesReporte = ESTADO.filtros.mes === ESTADO.periodoReporte.mes && ESTADO.filtros.anio === ESTADO.periodoReporte.anio;
+  chips.push('<span class="chip' + (esMesReporte ? "" : " acento") + '">Período: <b>' +
+    nombreMes(ESTADO.filtros.mes) + " " + ESTADO.filtros.anio + "</b>" +
+    (esMesReporte ? "" : " · distinto al mes de reporte") + "</span>");
+
+  if (ESTADO.filtros.modoAnio === "ambos") chips.push('<span class="chip acento">Vista: <b>comparar años</b></span>');
+
+  cont.innerHTML = chips.join("");
+}
+
+/** Texto plano de los filtros activos, para el encabezado del PDF. */
+function textoFiltros(){
+  const n = ESTADO.filtros.sedes.size;
+  const sedes = n === 0
+    ? "Todas las sedes (" + ESTADO.sedes.length + ")"
+    : n + " de " + ESTADO.sedes.length + " sedes (" + [...ESTADO.filtros.sedes].sort((a, b) => a.localeCompare(b, "es")).join(", ") + ")";
+  const partes = [
+    "Sede: " + sedes,
+    "Mes: " + nombreMes(ESTADO.filtros.mes),
+    "Año: " + ESTADO.filtros.anio + (ESTADO.filtros.modoAnio === "ambos" ? " (comparando con " + (ESTADO.filtros.anio - 1) + ")" : "")
+  ];
+  return partes.join(" · ");
+}
+
+/* ==================================================================================
+   10. PANEL DE ADVERTENCIAS
+   ================================================================================== */
+function renderizarAdvertencias(){
+  const btn = document.getElementById("btn-advertencias");
+  const lista = document.getElementById("lista-advertencias");
+  const n = ESTADO.advertencias.length;
+
+  if (n === 0){ btn.classList.remove("visible"); return; }
+  btn.classList.add("visible");
+  document.getElementById("conteo-advertencias").textContent = n;
+  lista.innerHTML = ESTADO.advertencias.map(a =>
+    '<li><span class="etq">' + escapar(a.tipo) + "</span>" + escapar(a.texto) + "</li>"
+  ).join("");
+
+  btn.addEventListener("click", e => {
+    e.stopPropagation();
+    const p = document.getElementById("panel-advertencias");
+    const abierto = p.classList.toggle("abierto");
+    btn.setAttribute("aria-expanded", String(abierto));
+  });
+}
+
+/* ==================================================================================
+   11. RENDERIZADO
+   ================================================================================== */
+function renderizar(){
+  renderizarChips();
+  actualizarEncabezado();
+  if (ESTADO.vistaActiva === "resumen") renderResumen();
+  else renderIndicador(CONFIG.indicadores.find(i => i.id === ESTADO.vistaActiva));
+}
+
+function actualizarEncabezado(){
+  document.getElementById("meta-periodo").textContent = "Reporte: " + etiquetaPeriodo(ESTADO.periodoReporte);
+  const f = ESTADO.cargadoEn;
+  document.getElementById("meta-actualizacion").textContent = f
+    ? "Datos actualizados: " + f.toLocaleDateString("es-CL") + " " + f.toLocaleTimeString("es-CL", { hour: "2-digit", minute: "2-digit" })
+    : "—";
+}
+
+/** Bloque de aviso cuando el mes de reporte tuvo que retroceder. */
+function htmlAviso(){
+  if (!ESTADO.retrocedio) return '<div class="aviso"></div>';
+  return '<div class="aviso visible"><span>&#9888;</span><div><strong>Datos de ' +
+    etiquetaPeriodo(ESTADO.periodoSolicitado) + ' aún no disponibles</strong> — mostrando ' +
+    etiquetaPeriodo(ESTADO.periodoReporte) + ", el último mes con información cargada.</div></div>";
+}
+
+/* ---------------------------------------------------------------------------------
+   VISTA RESUMEN
+   --------------------------------------------------------------------------------- */
+function renderResumen(){
+  const cont = document.getElementById("vista-resumen");
+  const { ref, prev, hayPrev } = aniosDeTrabajo();
+  const mes = ESTADO.filtros.mes;
+
+  cont.innerHTML =
+    '<div class="encabezado-vista">' +
+      '<h1><span class="sub">' + escapar(CONFIG.institucion) + "</span>Resumen de indicadores" +
+      '<span class="periodo">' + nombreMes(mes) + " " + ref + "</span></h1>" +
+    "</div>" +
+    htmlAviso() +
+    '<div class="grilla-kpi">' + CONFIG.indicadores.map(ind => htmlKpiResumen(ind, ref, prev, mes, hayPrev)).join("") + "</div>" +
+
+    seccion("evolucion", "Evolución mensual del sistema",
+      selectorIndicador("sel-evo-resumen"),
+      '<div class="caja-grafico"><canvas id="g-evo-resumen"></canvas></div>') +
+
+    '<div class="grilla-2">' +
+      seccion("comparativa", "Comparativa por sede · " + nombreMes(mes) + " " + ref, "",
+        '<div class="envoltorio-tabla" id="cont-tabla-resumen"></div>' +
+        '<p class="nota">Se muestra la métrica principal de cada indicador. Las celdas marcadas como <span class="sin-dato">sin dato</span> no se cuentan como cero. Haz clic en los encabezados para ordenar.</p>') +
+      seccion("ranking", "Ranking de sedes",
+        selectorIndicador("sel-rank-resumen"),
+        '<div class="caja-grafico alta"><canvas id="g-rank-resumen"></canvas></div>') +
+    "</div>";
+
+  // Selectores de indicador de cada gráfico
+  const selEvo = document.getElementById("sel-evo-resumen");
+  const selRank = document.getElementById("sel-rank-resumen");
+  selEvo.addEventListener("change", () => dibujarEvolucion("g-evo-resumen", selEvo.value));
+  selRank.addEventListener("change", () => dibujarRanking("g-rank-resumen", selRank.value));
+
+  dibujarEvolucion("g-evo-resumen", selEvo.value);
+  dibujarRanking("g-rank-resumen", selRank.value);
+  renderTablaResumen();
+}
+
+/** Combo <indicador · métrica> reutilizable en los encabezados de sección. */
+function selectorIndicador(id){
+  const ops = [];
+  CONFIG.indicadores.forEach(ind => {
+    ind.metricas.forEach(met => {
+      const etq = ind.metricas.length > 1 ? ind.nombreCorto + " · " + met.etiqueta : ind.nombre;
+      ops.push('<option value="' + ind.id + "|" + met.id + '">' + escapar(etq) + "</option>");
+    });
+  });
+  return '<div class="espaciador"></div><select id="' + id + '" aria-label="Indicador a graficar">' + ops.join("") + "</select>";
+}
+
+function seccion(id, titulo, controles, cuerpo){
+  return '<section class="seccion" data-seccion="' + id + '">' +
+    "<header><h2>" + escapar(titulo) + "</h2>" + (controles || "") + "</header>" +
+    '<div class="cuerpo-seccion">' + cuerpo + "</div></section>";
+}
+
+/** Tarjeta KPI del Resumen. */
+function htmlKpiResumen(ind, ref, prev, mes, hayPrev){
+  const d = ESTADO.datos[ind.id];
+  if (!d || d.estado !== "ok"){
+    return '<div class="kpi error"><div class="titulo">' + escapar(ind.nombre) + "</div>" +
+      '<div class="msj-error">No se pudo cargar esta hoja.</div>' +
+      '<div class="pie">Revisa el detalle en la vista del indicador.</div></div>';
+  }
+
+  const met = ind.metricas[0];
+  const actual = valor(ind.id, met.id, { anio: ref, mes });
+  const anterior = hayPrev ? valor(ind.id, met.id, { anio: prev, mes }) : null;
+  const v = hayPrev ? variacion(actual, anterior) : null;
+
+  let secundaria = "";
+  if (ind.metricas.length > 1){
+    const m2 = ind.metricas[1];
+    const val2 = valor(ind.id, m2.id, { anio: ref, mes });
+    secundaria = '<div class="secundario">' + escapar(m2.etiqueta) + ": <b>" + fmt(val2) + "</b></div>";
+  }
+
+  const pie = hayPrev
+    ? htmlVariacion(v) + '<span>vs. ' + nombreMes(mes) + " " + prev + ": " + fmtTxt(anterior) + "</span>"
+    : '<span style="color:var(--texto-muy-tenue)">Sin año anterior en los datos para comparar</span>';
+
+  return '<div class="kpi">' +
+    '<div class="titulo">' + escapar(ind.nombre) + "</div>" +
+    '<div class="valor">' + fmt(actual) + '<span class="unidad">' +
+      escapar(ind.metricas.length > 1 ? met.etiqueta.toLowerCase() : ind.unidad) + "</span></div>" +
+    secundaria +
+    '<div class="pie">' + pie + "</div></div>";
+}
+
+/* ---------------------------------------------------------------------------------
+   TABLA COMPARATIVA DEL RESUMEN (19 sedes × 4 indicadores)
+   --------------------------------------------------------------------------------- */
+function renderTablaResumen(){
+  const cont = document.getElementById("cont-tabla-resumen");
+  const { ref, prev, hayPrev } = aniosDeTrabajo();
+  const mes = ESTADO.filtros.mes;
+  const sedes = sedesVisibles();
+
+  if (sedes.length === 0){ cont.innerHTML = '<div class="vacio">No hay sedes seleccionadas.</div>'; return; }
+
+  // Se arma primero el modelo de datos para poder ordenar sin volver a consultar.
+  const filas = sedes.map(sede => {
+    const celdas = CONFIG.indicadores.map(ind => {
+      const met = ind.metricas[0];
+      const a = valor(ind.id, met.id, { anio: ref, mes, sede });
+      const b = hayPrev ? valor(ind.id, met.id, { anio: prev, mes, sede }) : null;
+      return { actual: a, anterior: b, variacion: hayPrev ? variacion(a, b) : null };
+    });
+    return { sede, celdas };
+  });
+
+  const cols = [{ etiqueta: "Sede", tipo: "texto" }];
+  CONFIG.indicadores.forEach(ind => {
+    cols.push({ etiqueta: ind.nombreCorto, tipo: "num" });
+    if (hayPrev) cols.push({ etiqueta: "Var.", tipo: "num", tenue: true });
+  });
+
+  ordenarFilas("resumen", filas, cols, hayPrev);
+
+  let html = '<table class="datos"><thead><tr>';
+  html += th("Sede", 0, "resumen", "izq");
+  let ci = 1;
+  CONFIG.indicadores.forEach(ind => {
+    html += th(ind.nombreCorto, ci++, "resumen", "sep-izq");
+    if (hayPrev) html += th("Var. %", ci++, "resumen", "");
+  });
+  html += "</tr></thead><tbody>";
+
+  filas.forEach(f => {
+    html += '<tr><td class="izq">' + escapar(f.sede) + "</td>";
+    f.celdas.forEach(c => {
+      html += '<td class="sep-izq">' + fmt(c.actual) + "</td>";
+      if (hayPrev) html += "<td>" + htmlVariacion(c.variacion, false) + "</td>";
+    });
+    html += "</tr>";
+  });
+  html += "</tbody><tfoot><tr><td class='izq'>Total sistema</td>";
+  CONFIG.indicadores.forEach((ind, i) => {
+    const totalA = sumar(filas.map(f => f.celdas[i].actual));
+    const totalB = hayPrev ? sumar(filas.map(f => f.celdas[i].anterior)) : null;
+    html += '<td class="sep-izq">' + fmt(totalA) + "</td>";
+    if (hayPrev) html += "<td>" + htmlVariacion(variacion(totalA, totalB), false) + "</td>";
+  });
+  html += "</tr></tfoot></table>";
+
+  cont.innerHTML = html;
+  activarOrdenamiento(cont, "resumen", renderTablaResumen);
+}
+
+/* ---------------------------------------------------------------------------------
+   VISTAS POR INDICADOR
+   --------------------------------------------------------------------------------- */
+function renderIndicador(ind){
+  const cont = document.getElementById("vista-" + ind.id);
+  const d = ESTADO.datos[ind.id];
+  const { ref, prev, hayPrev } = aniosDeTrabajo();
+  const mes = ESTADO.filtros.mes;
+
+  const cabecera =
+    '<div class="encabezado-vista">' +
+      '<h1><span class="sub">' + escapar(CONFIG.institucion) + "</span>" + escapar(ind.nombre) +
+      '<span class="periodo">' + nombreMes(mes) + " " + ref + "</span></h1>" +
+    "</div>";
+
+  /* Si la hoja falló, esta vista muestra su propio error sin afectar al resto. */
+  if (!d || d.estado !== "ok"){
+    cont.innerHTML = cabecera +
+      '<div class="bloque-error"><strong>No se pudieron cargar los datos de ' + escapar(ind.nombre) + "</strong>" +
+      escapar(d ? d.error : "Error desconocido") +
+      '<br><br>Hoja de origen: <code>' + escapar(/^PEGAR_GID/.test(ind.gid) ? "(gid sin configurar)" : urlHoja(ind.gid)) + "</code>" +
+      "<br>El resto del dashboard sigue funcionando con las hojas que sí cargaron.</div>";
+    return;
+  }
+
+  /* KPIs: mes de reporte y acumulado del año a la fecha, por cada métrica. */
+  const tarjetas = [];
+  ind.metricas.forEach(met => {
+    const actual = valor(ind.id, met.id, { anio: ref, mes });
+    const ant = hayPrev ? valor(ind.id, met.id, { anio: prev, mes }) : null;
+    tarjetas.push(tarjeta(
+      met.etiqueta + " · " + nombreMes(mes),
+      actual, hayPrev ? variacion(actual, ant) : null,
+      hayPrev ? "vs. " + nombreMes(mes) + " " + prev + ": " + fmtTxt(ant) : null
+    ));
+
+    const acum = valor(ind.id, met.id, { anio: ref, hastaMes: mes });
+    const acumAnt = hayPrev ? valor(ind.id, met.id, { anio: prev, hastaMes: mes }) : null;
+    tarjetas.push(tarjeta(
+      met.etiqueta + " · acumulado ene–" + CONFIG.mesesCortos[mes - 1].toLowerCase() + " " + ref,
+      acum, hayPrev ? variacion(acum, acumAnt) : null,
+      hayPrev ? "vs. acumulado " + prev + ": " + fmtTxt(acumAnt) : null
+    ));
+  });
+
+  /* Promedio por actividad, útil solo en Acciones Formativas. */
+  if (ind.id === "acciones_formativas"){
+    const act = valor(ind.id, "actividades", { anio: ref, mes });
+    const asi = valor(ind.id, "asistentes", { anio: ref, mes });
+    const prom = (act && asi !== null && act > 0) ? asi / act : null;
+    tarjetas.push('<div class="kpi"><div class="titulo">Promedio de asistentes por actividad</div>' +
+      '<div class="valor">' + (prom === null ? '<span class="sin-dato">sin dato</span>' : FMT_DECIMAL.format(prom)) + "</div>" +
+      '<div class="pie"><span>' + nombreMes(mes) + " " + ref + "</span></div></div>");
+  }
+
+  cont.innerHTML = cabecera + htmlAviso() +
+    '<div class="grilla-kpi">' + tarjetas.join("") + "</div>" +
+
+    seccion("evo-" + ind.id, "Evolución mensual",
+      ind.metricas.length > 1 ? selectorMetrica("sel-met-" + ind.id, ind) : "",
+      '<div class="caja-grafico"><canvas id="g-evo-' + ind.id + '"></canvas></div>') +
+
+    seccion("barras-" + ind.id, "Comparativo por sede · " + nombreMes(mes) + " " + ref, "",
+      '<div class="caja-grafico alta"><canvas id="g-barras-' + ind.id + '"></canvas></div>') +
+
+    seccion("tabla-" + ind.id, "Detalle por sede", "",
+      '<div class="envoltorio-tabla" id="cont-tabla-' + ind.id + '"></div>' +
+      (ind.nota ? '<p class="nota"><strong>Nota metodológica:</strong> ' + escapar(ind.nota) + "</p>" : "") +
+      '<p class="nota">Acumulado = suma de enero a ' + nombreMes(mes).toLowerCase() + ". Las variaciones muestran «n/a» cuando el período de comparación no tiene dato o es cero.</p>");
+
+  const selMet = document.getElementById("sel-met-" + ind.id);
+  const metActual = () => (selMet ? selMet.value : ind.metricas[0].id);
+  if (selMet) selMet.addEventListener("change", () => {
+    dibujarEvolucion("g-evo-" + ind.id, ind.id + "|" + metActual());
+    dibujarBarrasSede("g-barras-" + ind.id, ind, metActual());
+  });
+
+  dibujarEvolucion("g-evo-" + ind.id, ind.id + "|" + metActual());
+  dibujarBarrasSede("g-barras-" + ind.id, ind, metActual());
+  renderTablaIndicador(ind);
+}
+
+function selectorMetrica(id, ind){
+  return '<div class="espaciador"></div><select id="' + id + '" aria-label="Métrica">' +
+    ind.metricas.map(m => '<option value="' + m.id + '">' + escapar(m.etiqueta) + "</option>").join("") + "</select>";
+}
+
+function tarjeta(titulo, val, vari, refTexto){
+  const pie = refTexto
+    ? htmlVariacion(vari) + "<span>" + escapar(refTexto) + "</span>"
+    : '<span style="color:var(--texto-muy-tenue)">Sin período de comparación disponible</span>';
+  return '<div class="kpi"><div class="titulo">' + escapar(titulo) + "</div>" +
+    '<div class="valor">' + fmt(val) + "</div>" +
+    '<div class="pie">' + pie + "</div></div>";
+}
+
+/** Tabla detallada de una vista de indicador. */
+function renderTablaIndicador(ind){
+  const cont = document.getElementById("cont-tabla-" + ind.id);
+  const { ref, prev, hayPrev } = aniosDeTrabajo();
+  const mes = ESTADO.filtros.mes;
+  const sedes = sedesVisibles();
+  const met = ind.metricas[0];
+  const selMet = document.getElementById("sel-met-" + ind.id);
+  const idMet = selMet ? selMet.value : met.id;
+  const metObj = ind.metricas.find(m => m.id === idMet) || met;
+
+  if (sedes.length === 0){ cont.innerHTML = '<div class="vacio">No hay sedes seleccionadas.</div>'; return; }
+
+  const filas = sedes.map(sede => {
+    const a  = valor(ind.id, idMet, { anio: ref,  mes, sede });
+    const b  = hayPrev ? valor(ind.id, idMet, { anio: prev, mes, sede }) : null;
+    const aa = valor(ind.id, idMet, { anio: ref,  hastaMes: mes, sede });
+    const bb = hayPrev ? valor(ind.id, idMet, { anio: prev, hastaMes: mes, sede }) : null;
+    return {
+      sede, celdas: [a, b, hayPrev ? variacion(a, b) : null, aa, bb, hayPrev ? variacion(aa, bb) : null],
+      valores: { a, b, aa, bb }
+    };
+  });
+
+  const cols = hayPrev
+    ? [{ tipo: "texto" }, { tipo: "num" }, { tipo: "num" }, { tipo: "num" }, { tipo: "num" }, { tipo: "num" }, { tipo: "num" }]
+    : [{ tipo: "texto" }, { tipo: "num" }, { tipo: "num" }];
+
+  ordenarFilasIndicador(ind.id, filas, hayPrev);
+
+  const claveTabla = ind.id;
+  let html = '<table class="datos">';
+
+  if (hayPrev){
+    html += '<thead><tr class="grupo"><th></th><th colspan="3" class="sep-izq">' + nombreMes(mes) + '</th><th colspan="3" class="sep-izq">Acumulado enero–' + nombreMes(mes).toLowerCase() + "</th></tr><tr>";
+    html += th("Sede", 0, claveTabla, "izq");
+    html += th(String(ref), 1, claveTabla, "sep-izq");
+    html += th(String(prev), 2, claveTabla, "");
+    html += th("Var. %", 3, claveTabla, "");
+    html += th(String(ref), 4, claveTabla, "sep-izq");
+    html += th(String(prev), 5, claveTabla, "");
+    html += th("Var. %", 6, claveTabla, "");
+    html += "</tr></thead><tbody>";
+    filas.forEach(f => {
+      html += '<tr><td class="izq">' + escapar(f.sede) + "</td>" +
+        '<td class="sep-izq">' + fmt(f.celdas[0]) + "</td>" +
+        "<td>" + fmt(f.celdas[1]) + "</td>" +
+        "<td>" + htmlVariacion(f.celdas[2], false) + "</td>" +
+        '<td class="sep-izq">' + fmt(f.celdas[3]) + "</td>" +
+        "<td>" + fmt(f.celdas[4]) + "</td>" +
+        "<td>" + htmlVariacion(f.celdas[5], false) + "</td></tr>";
+    });
+    const tA = sumar(filas.map(f => f.valores.a)),  tB = sumar(filas.map(f => f.valores.b));
+    const tAA = sumar(filas.map(f => f.valores.aa)), tBB = sumar(filas.map(f => f.valores.bb));
+    html += "</tbody><tfoot><tr><td class='izq'>Total sistema</td>" +
+      '<td class="sep-izq">' + fmt(tA) + "</td><td>" + fmt(tB) + "</td><td>" + htmlVariacion(variacion(tA, tB), false) + "</td>" +
+      '<td class="sep-izq">' + fmt(tAA) + "</td><td>" + fmt(tBB) + "</td><td>" + htmlVariacion(variacion(tAA, tBB), false) + "</td></tr></tfoot>";
+  } else {
+    /* Sin año anterior en los datos: se omiten las columnas de comparación
+       en vez de llenarlas de «n/a». Vuelven solas al cargar el histórico. */
+    html += "<thead><tr>";
+    html += th("Sede", 0, claveTabla, "izq");
+    html += th(nombreMes(mes) + " " + ref, 1, claveTabla, "sep-izq");
+    html += th("Acumulado enero–" + nombreMes(mes).toLowerCase() + " " + ref, 2, claveTabla, "");
+    html += "</tr></thead><tbody>";
+    filas.forEach(f => {
+      html += '<tr><td class="izq">' + escapar(f.sede) + "</td>" +
+        '<td class="sep-izq">' + fmt(f.celdas[0]) + "</td>" +
+        "<td>" + fmt(f.celdas[3]) + "</td></tr>";
+    });
+    const tA = sumar(filas.map(f => f.valores.a)), tAA = sumar(filas.map(f => f.valores.aa));
+    html += "</tbody><tfoot><tr><td class='izq'>Total sistema</td>" +
+      '<td class="sep-izq">' + fmt(tA) + "</td><td>" + fmt(tAA) + "</td></tr></tfoot>";
+  }
+
+  html += "</table>";
+  cont.innerHTML = html;
+  activarOrdenamiento(cont, claveTabla, () => renderTablaIndicador(ind));
+
+}
+
+/* ---------------------------------------------------------------------------------
+   ORDENAMIENTO DE TABLAS
+   --------------------------------------------------------------------------------- */
+function th(etiqueta, indice, clave, clases){
+  const o = ESTADO.orden[clave];
+  let cls = "ordenable " + (clases || "");
+  if (o && o.col === indice) cls += o.dir === 1 ? " ord-asc" : " ord-desc";
+  const ind = (o && o.col === indice) ? (o.dir === 1 ? "▲" : "▼") : "⇅";
+  return '<th class="' + cls.trim() + '" data-col="' + indice + '">' + escapar(etiqueta) + '<span class="ind">' + ind + "</span></th>";
+}
+
+function activarOrdenamiento(cont, clave, redibujar){
+  cont.querySelectorAll("th.ordenable").forEach(el => {
+    el.addEventListener("click", () => {
+      const col = +el.dataset.col;
+      const o = ESTADO.orden[clave];
+      // Primer clic en una columna numérica: descendente (lo más alto arriba).
+      ESTADO.orden[clave] = (o && o.col === col) ? { col, dir: -o.dir } : { col, dir: col === 0 ? 1 : -1 };
+      redibujar();
+    });
+  });
+}
+
+/** null siempre al final, sin importar la dirección del orden. */
+function comparar(a, b, dir){
+  const na = (a === null || a === undefined || !Number.isFinite(a));
+  const nb = (b === null || b === undefined || !Number.isFinite(b));
+  if (na && nb) return 0;
+  if (na) return 1;
+  if (nb) return -1;
+  return (a - b) * dir;
+}
+
+function ordenarFilas(clave, filas, cols, hayPrev){
+  const o = ESTADO.orden[clave];
+  if (!o) return;
+  if (o.col === 0){
+    filas.sort((x, y) => x.sede.localeCompare(y.sede, "es") * o.dir);
+    return;
+  }
+  const porInd = hayPrev ? 2 : 1;
+  const idxInd = Math.floor((o.col - 1) / porInd);
+  const esVar = hayPrev && ((o.col - 1) % porInd === 1);
+  filas.sort((x, y) => {
+    const a = esVar ? x.celdas[idxInd].variacion : x.celdas[idxInd].actual;
+    const b = esVar ? y.celdas[idxInd].variacion : y.celdas[idxInd].actual;
+    return comparar(a, b, o.dir);
+  });
+}
+
+function ordenarFilasIndicador(clave, filas, hayPrev){
+  const o = ESTADO.orden[clave];
+  if (!o) return;
+  if (o.col === 0){ filas.sort((x, y) => x.sede.localeCompare(y.sede, "es") * o.dir); return; }
+  const mapa = hayPrev ? [null, 0, 1, 2, 3, 4, 5] : [null, 0, 3];
+  const idx = mapa[o.col];
+  if (idx === undefined || idx === null) return;
+  filas.sort((x, y) => comparar(x.celdas[idx], y.celdas[idx], o.dir));
+}
+
+/* ==================================================================================
+   12. GRÁFICOS (Chart.js)
+   ================================================================================== */
+Chart.defaults.font.family = "'Lato', sans-serif";
+Chart.defaults.font.size = 11;
+Chart.defaults.color = "#606060";
+Chart.defaults.animation = false;   // más previsible al imprimir
+
+function destruir(id){
+  if (ESTADO.graficos[id]){ ESTADO.graficos[id].destroy(); delete ESTADO.graficos[id]; }
+}
+
+/** Gráfico de líneas: evolución mensual año actual vs. año anterior. */
+function dibujarEvolucion(idCanvas, valorSelector){
+  const [idInd, idMet] = valorSelector.split("|");
+  const ind = CONFIG.indicadores.find(i => i.id === idInd);
+  const canvas = document.getElementById(idCanvas);
+  if (!canvas || !ind) return;
+  destruir(idCanvas);
+
+  const d = ESTADO.datos[idInd];
+  const cont = canvas.parentElement;
+  if (!d || d.estado !== "ok"){
+    cont.innerHTML = '<div class="bloque-error"><strong>Sin datos para graficar</strong>' + escapar(d ? d.error : "") + "</div>";
+    return;
+  }
+
+  const { ref, prev, hayPrev } = aniosDeTrabajo();
+  const serieRef = serieMensual(idInd, idMet, ref);
+  const seriePrev = hayPrev ? serieMensual(idInd, idMet, prev) : null;
+
+  const datasets = [];
+  if (seriePrev){
+    datasets.push({
+      label: String(prev), data: seriePrev,
+      borderColor: CONFIG.colores.grisSerie, backgroundColor: CONFIG.colores.grisSerie,
+      borderWidth: 2, borderDash: [5, 4], pointRadius: 2.5, pointHoverRadius: 5, tension: .18, spanGaps: false
+    });
+  }
+  datasets.push({
+    label: String(ref), data: serieRef,
+    borderColor: CONFIG.colores.negro, backgroundColor: CONFIG.colores.negro,
+    borderWidth: 2.5, pointRadius: 3, pointHoverRadius: 6,
+    pointBackgroundColor: CONFIG.colores.amarillo, pointBorderColor: CONFIG.colores.negro, pointBorderWidth: 1.5,
+    tension: .18, spanGaps: false
+  });
+
+  ESTADO.graficos[idCanvas] = new Chart(canvas, {
+    type: "line",
+    data: { labels: CONFIG.mesesCortos, datasets },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      interaction: { mode: "index", intersect: false },
+      plugins: {
+        legend: { position: "top", align: "end", labels: { boxWidth: 14, boxHeight: 2, usePointStyle: false, padding: 14 } },
+        tooltip: {
+          backgroundColor: "#000", titleFont: { weight: "900" }, padding: 10, cornerRadius: 2, displayColors: true,
+          callbacks: {
+            title: items => nombreMes(items[0].dataIndex + 1),
+            label: item => {
+              const v = item.parsed.y;
+              return item.dataset.label + ": " + (v === null ? "sin dato" : FMT_ENTERO.format(v));
+            },
+            afterBody: items => {
+              if (!seriePrev) return "";
+              const i = items[0].dataIndex;
+              const vr = variacion(serieRef[i], seriePrev[i]);
+              return vr === null
+                ? "Variación interanual: n/a"
+                : "Variación interanual: " + (vr > 0 ? "+" : "") + FMT_DECIMAL.format(vr) + "%";
+            }
+          }
+        }
+      },
+      scales: {
+        x: { grid: { display: false }, border: { color: "#C9C9C9" } },
+        y: { beginAtZero: true, grid: { color: "#EFEFEF" }, border: { display: false },
+             ticks: { callback: v => FMT_ENTERO.format(v) } }
+      }
+    }
+  });
+}
+
+/** Barras horizontales: ranking de sedes según el indicador seleccionado. */
+function dibujarRanking(idCanvas, valorSelector){
+  const [idInd, idMet] = valorSelector.split("|");
+  const ind = CONFIG.indicadores.find(i => i.id === idInd);
+  if (ind) dibujarBarrasSede(idCanvas, ind, idMet, true);
+}
+
+/** Barras horizontales por sede. `ordenar` = ranking descendente. */
+function dibujarBarrasSede(idCanvas, ind, idMet, ordenar){
+  const canvas = document.getElementById(idCanvas);
+  if (!canvas) return;
+  destruir(idCanvas);
+
+  const d = ESTADO.datos[ind.id];
+  const cont = canvas.parentElement;
+  if (!d || d.estado !== "ok"){
+    cont.innerHTML = '<div class="bloque-error"><strong>Sin datos para graficar</strong>' + escapar(d ? d.error : "") + "</div>";
+    return;
+  }
+
+  const { ref, prev, hayPrev } = aniosDeTrabajo();
+  const mes = ESTADO.filtros.mes;
+
+  let filas = sedesVisibles().map(sede => ({
+    sede,
+    actual: valor(ind.id, idMet, { anio: ref, mes, sede }),
+    anterior: hayPrev ? valor(ind.id, idMet, { anio: prev, mes, sede }) : null
+  }));
+
+  if (ordenar !== false) filas.sort((a, b) => comparar(a.actual, b.actual, -1));
+
+  if (filas.length === 0){ cont.innerHTML = '<div class="vacio">No hay sedes seleccionadas.</div>'; return; }
+
+  const datasets = [];
+  if (hayPrev){
+    datasets.push({
+      label: String(prev), data: filas.map(f => f.anterior),
+      backgroundColor: CONFIG.colores.grisSerie, borderWidth: 0, barPercentage: .82, categoryPercentage: .72
+    });
+  }
+  datasets.push({
+    label: String(ref), data: filas.map(f => f.actual),
+    backgroundColor: CONFIG.colores.amarillo,     // serie del año actual en amarillo Duoc
+    borderColor: CONFIG.colores.negro, borderWidth: 1,
+    barPercentage: .82, categoryPercentage: .72
+  });
+
+  ESTADO.graficos[idCanvas] = new Chart(canvas, {
+    type: "bar",
+    data: { labels: filas.map(f => f.sede), datasets },
+    options: {
+      indexAxis: "y",
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: hayPrev, position: "top", align: "end", labels: { boxWidth: 12, boxHeight: 12, padding: 12 } },
+        tooltip: {
+          backgroundColor: "#000", titleFont: { weight: "900" }, padding: 10, cornerRadius: 2,
+          callbacks: {
+            label: item => {
+              const v = item.parsed.x;
+              return item.dataset.label + ": " + (v === null ? "sin dato" : FMT_ENTERO.format(v));
+            },
+            afterBody: items => {
+              if (!hayPrev) return "";
+              const f = filas[items[0].dataIndex];
+              const vr = variacion(f.actual, f.anterior);
+              return vr === null
+                ? "Variación interanual: n/a"
+                : "Variación interanual: " + (vr > 0 ? "+" : "") + FMT_DECIMAL.format(vr) + "%";
+            }
+          }
+        }
+      },
+      scales: {
+        x: { beginAtZero: true, grid: { color: "#EFEFEF" }, border: { display: false },
+             ticks: { callback: v => FMT_ENTERO.format(v) } },
+        y: { grid: { display: false }, border: { color: "#C9C9C9" },
+             ticks: { autoSkip: false, font: { size: 10.5 } } }
+      }
+    }
+  });
+}
+</script>
+
+<script>
+"use strict";
+/* ==================================================================================
+   13. EXPORTACIÓN A PDF
+   Se usa window.print() con una hoja @media print dedicada, en vez de
+   html2canvas + jsPDF. Motivos:
+     · Las tablas salen como tablas reales (texto seleccionable y buscable, sin
+       pixelado), que es justamente el requisito. html2canvas rasteriza todo.
+     · Los <canvas> de Chart.js se imprimen nativamente a la resolución del
+       dispositivo, sin el reescalado borroso típico de html2canvas.
+     · Los acentos y la tipografía Lato se conservan; html2canvas depende de que
+       las fuentes web ya estén resueltas y suele romper tildes en algunos casos.
+     · Cero dependencias extra y ningún problema de CORS al capturar.
+   Lo único que window.print() no permite controlar es el nombre del archivo; se
+   resuelve cambiando temporalmente document.title, que es lo que Chrome, Edge y
+   Firefox usan como nombre por defecto al «Guardar como PDF».
+   ================================================================================== */
+
+function nombreArchivoPdf(){
+  const vista = ESTADO.vistaActiva === "resumen"
+    ? "resumen"
+    : (CONFIG.indicadores.find(i => i.id === ESTADO.vistaActiva) || {}).id;
+  const mes = CONFIG.meses[ESTADO.filtros.mes - 1].toLowerCase()
+    .normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  return "bibliotecas-" + vista + "-" + mes + "-" + ESTADO.filtros.anio + ".pdf";
+}
+
+function exportarPdf(){
+  /* Se completa el encabezado que solo existe en el PDF, con lo que hay en pantalla. */
+  const v = ESTADO.vistaActiva === "resumen"
+    ? "Resumen de indicadores"
+    : (CONFIG.indicadores.find(i => i.id === ESTADO.vistaActiva) || {}).nombre;
+
+  document.getElementById("imp-vista").textContent = v;
+  document.getElementById("imp-periodo").textContent = nombreMes(ESTADO.filtros.mes) + " " + ESTADO.filtros.anio;
+  document.getElementById("imp-generado").textContent =
+    new Date().toLocaleDateString("es-CL") + " a las " +
+    new Date().toLocaleTimeString("es-CL", { hour: "2-digit", minute: "2-digit" });
+  document.getElementById("imp-filtros").textContent = textoFiltros();
+
+  /* Los gráficos deben redimensionarse al ancho de página antes de imprimir. */
+  const titulo = document.title;
+  document.title = nombreArchivoPdf().replace(/\.pdf$/, "");
+
+  const restaurar = () => {
+    document.title = titulo;
+    Object.values(ESTADO.graficos).forEach(g => { try { g.resize(); } catch(e){} });
+  };
+
+  // Chart.js necesita un tick para reajustarse al layout de impresión.
+  Object.values(ESTADO.graficos).forEach(g => { try { g.resize(); } catch(e){} });
+
+  window.addEventListener("afterprint", restaurar, { once: true });
+  setTimeout(() => { window.print(); }, 120);
+  // Respaldo por si el navegador no dispara afterprint.
+  setTimeout(restaurar, 4000);
+}
+
+/* Chart.js se reajusta cuando el navegador entra en modo impresión. */
+if (window.matchMedia){
+  const mq = window.matchMedia("print");
+  const handler = () => Object.values(ESTADO.graficos).forEach(g => { try { g.resize(); } catch(e){} });
+  if (mq.addEventListener) mq.addEventListener("change", handler);
+  else if (mq.addListener) mq.addListener(handler);
+}
+
+/* ==================================================================================
+   14. ARRANQUE
+   ================================================================================== */
+async function iniciar(){
+  const capa = document.getElementById("capa-carga");
+  const detalle = document.getElementById("detalle-carga");
+
+  try {
+    detalle.textContent = "Descargando " + CONFIG.indicadores.length + " hojas desde Google Sheets…";
+    await cargarTodo();
+  } catch (e){
+    // cargarTodo() ya captura los fallos por hoja; esto cubre un error inesperado.
+    registrarAdvertencia("Sistema", "Error inesperado durante la carga: " + e.message);
+  }
+
+  const algunaOk = CONFIG.indicadores.some(i => ESTADO.datos[i.id] && ESTADO.datos[i.id].estado === "ok");
+
+  if (!algunaOk){
+    /* Caso más frecuente: el archivo se abrió con doble clic. No es un problema
+       de las hojas, así que se da la instrucción concreta para resolverlo. */
+    const diagnostico = esOrigenLocal()
+      ? "<strong>El dashboard se abrió como archivo local (file://)</strong>" +
+        "Por seguridad, el navegador no deja que una página abierta desde el disco descargue datos de Google. " +
+        "Las hojas están bien: solo falta servir el archivo desde una dirección web.<br><br>" +
+        "<strong>Opción 1 — publicarlo (lo definitivo):</strong> súbelo a GitHub Pages. " +
+        "Ahí queda en <code>https://…</code> y funciona sin más ajustes.<br><br>" +
+        "<strong>Opción 2 — probarlo ahora en tu equipo:</strong> abre una consola en la carpeta " +
+        "donde está este archivo y ejecuta <code>python -m http.server 8000</code>, " +
+        "luego entra a <code>http://localhost:8000</code>.<br><br>" +
+        "<em>Para confirmar que las hojas están bien: pega la URL de cualquiera de los cuatro CSV " +
+        "en una pestaña nueva. Si descarga el archivo, la publicación está correcta.</em>"
+      : "<strong>No se pudo cargar ninguna hoja de datos</strong>" +
+        "Revisa que las cuatro hojas sigan publicadas en la web (Archivo → Compartir → Publicar en la web, formato CSV) " +
+        "y que los gid de la configuración correspondan a las hojas correctas.<br><br>" +
+        CONFIG.indicadores.map(i => {
+          const d = ESTADO.datos[i.id];
+          return "<strong>" + escapar(i.nombre) + ":</strong> " + escapar(d ? d.error : "sin respuesta");
+        }).join("<br>");
+
+    capa.innerHTML = '<div style="max-width:660px;padding:0 24px">' +
+      '<div class="bloque-error">' + diagnostico + "</div></div>";
+    return;
+  }
+
+  construirMenu();
+  construirContenedores();
+  construirFiltros();
+  renderizarAdvertencias();
+  renderizar();
+
+  document.getElementById("btn-pdf").addEventListener("click", exportarPdf);
+
+  capa.classList.add("oculta");
+}
+
+document.addEventListener("DOMContentLoaded", iniciar);
+</script>
+</body>
+</html>
