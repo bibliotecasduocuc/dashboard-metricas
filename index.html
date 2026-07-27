@@ -1,0 +1,3346 @@
+<!DOCTYPE html>
+<html lang="es-CL">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Indicadores de gestión · Bibliotecas Duoc UC</title>
+
+<!-- Tipografía institucional: Lato (Regular 400, Bold 700, Black 900) -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700;900&display=swap" rel="stylesheet">
+
+<!-- Librerías desde CDN -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+
+<style>
+/* ============================================================
+   TEMA DUOC SIGNATURE
+   Conserva la identidad institucional (blanco, negro, #F5A800,
+   Lato) y trabaja profundidad, jerarquía y movimiento.
+   ============================================================ */
+:root{
+  /* --- Identidad, sin cambios --- */
+  --negro:#000000;
+  --blanco:#FFFFFF;
+  --amarillo:#F5A800;
+
+  /* --- Paleta ampliada, derivada de la institucional --- */
+  --tinta:#0B0B0D;
+  --tinta-2:#17171B;
+  --lienzo:#F7F7F9;
+  --superficie:#FFFFFF;
+  --velo:#FBFBFC;
+  --superficie-alt:#FAFAFB;
+  --linea:#E8E8EC;
+  --borde:#E8E8EC;
+  --borde-fuerte:#D2D2D8;
+  --ambar-alto:#FFC24D;
+  --ambar-bajo:#D99400;
+  --amarillo-suave:#FFF6E3;
+  --ambar-humo:rgba(245,168,0,.10);
+
+  --texto:#0B0B0D;
+  --texto-tenue:#5B5B66;
+  --texto-muy-tenue:#8E8E9A;
+  --serie-anterior:#B5B5B5;
+  --serie-actual:#000000;
+  --negativo:#C0271E;
+  --alerta:#8A6100;
+
+  /* --- Degradados: deben leerse como luz, no como color --- */
+  --grad-superficie:linear-gradient(180deg,#FFFFFF 0%,#FBFBFC 100%);
+  --grad-tinta:linear-gradient(180deg,#17171B 0%,#0B0B0D 100%);
+  --grad-ambar:linear-gradient(180deg,#FFC24D 0%,#F5A800 55%,#D99400 100%);
+
+  /* --- Elevación --- */
+  --sombra-1:0 1px 2px rgba(11,11,13,.05);
+  --sombra-2:0 1px 2px rgba(11,11,13,.04),0 12px 28px -14px rgba(11,11,13,.16);
+  --sombra-3:0 2px 4px rgba(11,11,13,.06),0 20px 40px -16px rgba(11,11,13,.22);
+
+  --radio:12px;
+  --radio-sm:8px;
+  --radio-xs:6px;
+
+  --curva:cubic-bezier(.4,0,.2,1);
+  --rapido:140ms;
+  --normal:220ms;
+
+  --alto-banner:60px;
+  --alto-nav:50px;
+}
+
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  font-family:'Lato',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  font-weight:400;background:var(--lienzo);color:var(--texto);
+  font-size:14px;line-height:1.5;
+  -webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;
+  text-rendering:optimizeLegibility;
+}
+h1,h2,h3,h4{margin:0;font-weight:900;letter-spacing:-0.018em;}
+button{font-family:inherit;font-size:inherit;cursor:pointer;}
+table{border-collapse:collapse;width:100%;}
+
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms !important;transition-duration:.01ms !important;}
+}
+
+/* ============================================================
+   ENCABEZADO
+   ============================================================ */
+#cabecera{
+  position:sticky;top:0;z-index:200;
+  background:var(--grad-tinta);
+  box-shadow:0 1px 0 rgba(255,255,255,.06) inset,0 8px 24px -12px rgba(11,11,13,.5);
+}
+#banner{
+  height:var(--alto-banner);display:flex;align-items:center;gap:16px;
+  padding:0 28px;color:var(--blanco);
+  border-bottom:1px solid rgba(255,255,255,.07);
+}
+#banner .marca{display:flex;align-items:baseline;gap:12px;min-width:0;}
+#banner .marca strong{font-weight:900;font-size:18px;letter-spacing:-0.028em;white-space:nowrap;}
+#banner .marca span{
+  font-weight:400;font-size:12px;color:#A8A8B4;
+  border-left:1px solid rgba(255,255,255,.14);padding-left:12px;white-space:nowrap;
+  overflow:hidden;text-overflow:ellipsis;letter-spacing:.01em;
+}
+#banner .espaciador{flex:1;}
+#banner .meta{text-align:right;font-size:11px;color:#A8A8B4;line-height:1.35;white-space:nowrap;}
+#banner .meta b{display:block;color:var(--blanco);font-weight:700;font-size:12.5px;letter-spacing:-.01em;}
+
+#menu{
+  height:var(--alto-nav);display:flex;align-items:stretch;
+  padding:0 20px;overflow-x:auto;scrollbar-width:none;position:relative;
+}
+#menu::-webkit-scrollbar{display:none;}
+#menu button{
+  background:transparent;border:none;color:#9A9AA6;padding:0 18px;
+  font-size:13px;font-weight:700;letter-spacing:.005em;white-space:nowrap;
+  position:relative;transition:color var(--normal) var(--curva);
+}
+#menu button::after{
+  content:"";position:absolute;left:14px;right:14px;bottom:0;height:3px;
+  background:var(--grad-ambar);border-radius:3px 3px 0 0;
+  transform:scaleX(0);transform-origin:center;
+  transition:transform var(--normal) var(--curva);
+}
+#menu button:hover{color:#E6E6EC;}
+#menu button:hover::after{transform:scaleX(.4);}
+#menu button.activo{color:var(--blanco);}
+#menu button.activo::after{transform:scaleX(1);}
+
+/* ============================================================
+   FILTROS
+   ============================================================ */
+#barra-filtros{
+  position:sticky;top:calc(var(--alto-banner) + var(--alto-nav));z-index:150;
+  background:rgba(255,255,255,.86);
+  -webkit-backdrop-filter:saturate(180%) blur(14px);
+  backdrop-filter:saturate(180%) blur(14px);
+  border-bottom:1px solid var(--linea);
+  padding:11px 28px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+}
+.grupo-filtro{display:flex;align-items:center;gap:8px;}
+.grupo-filtro > label{
+  font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.11em;color:var(--texto-muy-tenue);
+}
+.control{
+  background:var(--blanco);border:1px solid var(--borde-fuerte);border-radius:var(--radio-sm);
+  padding:7px 11px;font-size:13px;font-family:inherit;color:var(--texto);
+  min-height:34px;max-width:230px;box-shadow:var(--sombra-1);
+  transition:border-color var(--rapido) var(--curva),box-shadow var(--rapido) var(--curva);
+}
+select.control{cursor:pointer;padding-right:26px;}
+.control:hover{border-color:#B4B4BE;}
+.control:focus{outline:none;border-color:var(--amarillo);box-shadow:0 0 0 3px var(--ambar-humo);}
+
+.multi{position:relative;}
+.multi > button{
+  background:var(--blanco);border:1px solid var(--borde-fuerte);border-radius:var(--radio-sm);
+  padding:7px 12px;font-size:13px;min-height:34px;min-width:180px;text-align:left;
+  display:flex;align-items:center;justify-content:space-between;gap:10px;
+  box-shadow:var(--sombra-1);
+  transition:border-color var(--rapido) var(--curva),box-shadow var(--rapido) var(--curva);
+}
+.multi > button:hover{border-color:#B4B4BE;box-shadow:var(--sombra-2);}
+.multi > button[aria-expanded="true"]{border-color:var(--amarillo);box-shadow:0 0 0 3px var(--ambar-humo);}
+.multi > button .flecha{font-size:9px;color:var(--texto-muy-tenue);transition:transform var(--normal) var(--curva);}
+.multi > button[aria-expanded="true"] .flecha{transform:rotate(180deg);}
+.multi-panel{
+  display:none;position:absolute;top:calc(100% + 6px);left:0;z-index:180;width:300px;
+  background:var(--blanco);border:1px solid var(--linea);border-radius:var(--radio);
+  box-shadow:var(--sombra-3);overflow:hidden;
+  animation:emerger var(--normal) var(--curva);
+}
+@keyframes emerger{from{opacity:0;transform:translateY(-6px) scale(.99)}to{opacity:1;transform:none}}
+.multi-panel.abierto{display:block;}
+.multi-panel .acciones{display:flex;gap:8px;padding:10px 12px;border-bottom:1px solid var(--linea);background:var(--velo);}
+.multi-panel .acciones button{
+  flex:1;background:var(--blanco);border:1px solid var(--borde-fuerte);
+  padding:6px 8px;font-size:11.5px;font-weight:700;border-radius:var(--radio-xs);
+  transition:all var(--rapido) var(--curva);
+}
+.multi-panel .acciones button:hover{border-color:var(--tinta);background:var(--tinta);color:var(--blanco);}
+.multi-panel .lista{max-height:290px;overflow-y:auto;padding:5px 0;}
+.multi-panel .lista label{
+  display:flex;align-items:center;gap:10px;padding:6px 14px;font-size:13px;cursor:pointer;
+  transition:background var(--rapido) var(--curva);
+}
+.multi-panel .lista label:hover{background:var(--ambar-humo);}
+.multi-panel .lista input{accent-color:var(--tinta);width:14px;height:14px;flex:none;}
+
+#chips-filtros{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-left:auto;}
+.chip{
+  display:inline-flex;align-items:center;gap:6px;background:var(--blanco);
+  border:1px solid var(--linea);padding:4px 11px;font-size:11.5px;
+  border-radius:100px;color:var(--texto-tenue);box-shadow:var(--sombra-1);
+}
+.chip b{font-weight:900;color:var(--texto);}
+.chip.acento{border-color:rgba(245,168,0,.45);background:var(--amarillo-suave);color:var(--alerta);}
+.chip.acento b{color:var(--alerta);}
+
+#btn-pdf{
+  background:var(--grad-tinta);color:var(--blanco);border:1px solid var(--tinta);
+  padding:8px 17px;font-size:12.5px;font-weight:900;border-radius:var(--radio-sm);
+  min-height:34px;white-space:nowrap;letter-spacing:.01em;box-shadow:var(--sombra-2);
+  transition:transform var(--rapido) var(--curva),box-shadow var(--rapido) var(--curva),background var(--rapido) var(--curva);
+}
+#btn-pdf:hover{background:var(--grad-ambar);color:var(--tinta);border-color:var(--ambar-bajo);box-shadow:var(--sombra-3);transform:translateY(-1px);}
+#btn-pdf:active{transform:translateY(0);box-shadow:var(--sombra-1);}
+
+.filtros-locales{
+  display:flex;align-items:center;gap:12px;flex-wrap:wrap;
+  background:var(--grad-superficie);border:1px solid var(--linea);
+  border-radius:var(--radio);padding:12px 16px;margin-bottom:20px;
+  box-shadow:var(--sombra-1);position:relative;overflow:hidden;
+}
+.filtros-locales::before{
+  content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--grad-ambar);
+}
+.filtros-locales .titulo{
+  font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.11em;
+  color:var(--texto-muy-tenue);margin-left:4px;
+}
+.filtros-locales button.limpiar{
+  background:var(--blanco);border:1px solid var(--borde-fuerte);padding:6px 12px;
+  font-size:11.5px;font-weight:700;border-radius:var(--radio-xs);
+  transition:all var(--rapido) var(--curva);
+}
+.filtros-locales button.limpiar:hover{background:var(--tinta);color:var(--blanco);border-color:var(--tinta);}
+
+/* ============================================================
+   CONTENIDO
+   ============================================================ */
+main{padding:26px 28px 72px;max-width:1720px;margin:0 auto;}
+.vista{display:none;}
+.vista.activa{display:block;animation:entrar var(--normal) var(--curva);}
+@keyframes entrar{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+.encabezado-vista{margin-bottom:22px;}
+.encabezado-vista h1{font-size:30px;line-height:1.1;letter-spacing:-.03em;}
+.encabezado-vista h1 .sub{
+  display:block;font-size:11px;font-weight:900;text-transform:uppercase;
+  letter-spacing:.14em;color:var(--texto-muy-tenue);margin-bottom:7px;
+}
+.encabezado-vista .periodo{
+  display:inline-block;margin-top:10px;font-size:13px;font-weight:700;
+  padding:3px 0 3px;border-bottom:3px solid transparent;
+  background-image:var(--grad-ambar);background-repeat:no-repeat;
+  background-size:100% 3px;background-position:0 100%;
+}
+.encabezado-vista .periodo.acumulado::after{
+  content:"acumulado";font-size:9px;font-weight:900;text-transform:uppercase;
+  letter-spacing:.1em;color:var(--alerta);background:var(--amarillo-suave);
+  border:1px solid rgba(245,168,0,.35);
+  padding:2px 7px;margin-left:10px;border-radius:100px;vertical-align:middle;
+}
+
+.aviso{
+  display:none;align-items:flex-start;gap:12px;
+  background:linear-gradient(180deg,#FFFAF0 0%,#FFF6E3 100%);
+  border:1px solid rgba(245,168,0,.32);border-left:3px solid var(--amarillo);
+  border-radius:var(--radio);padding:13px 17px;margin-bottom:20px;
+  font-size:13px;color:var(--alerta);box-shadow:var(--sombra-1);
+}
+.aviso.visible{display:flex;}
+.aviso strong{font-weight:900;}
+
+/* --- Secciones --- */
+.seccion{
+  margin-bottom:22px;border-radius:var(--radio);overflow:hidden;
+  box-shadow:var(--sombra-2);background:var(--superficie);
+  transition:box-shadow var(--normal) var(--curva);
+}
+.seccion:hover{box-shadow:var(--sombra-3);}
+.seccion > header{
+  background:var(--grad-tinta);color:var(--blanco);padding:12px 18px;
+  display:flex;align-items:center;gap:14px;flex-wrap:wrap;position:relative;
+}
+.seccion > header::before{
+  content:"";position:absolute;left:0;top:0;bottom:0;width:0;
+  background:var(--grad-ambar);transition:width var(--normal) var(--curva);
+}
+.seccion:hover > header::before{width:3px;}
+.seccion > header h2{font-size:12.5px;font-weight:900;text-transform:uppercase;letter-spacing:.1em;}
+.seccion > header .espaciador{flex:1;}
+.seccion > header .pista{font-size:11px;font-weight:400;color:#9A9AA6;text-transform:none;letter-spacing:0;}
+.seccion > header select{
+  background:rgba(255,255,255,.08);color:var(--blanco);border:1px solid rgba(255,255,255,.18);
+  border-radius:var(--radio-xs);padding:5px 9px;font-size:12px;font-family:inherit;
+  cursor:pointer;max-width:260px;transition:all var(--rapido) var(--curva);
+}
+.seccion > header select:hover{background:rgba(255,255,255,.14);}
+.seccion > header select:focus{outline:none;border-color:var(--amarillo);box-shadow:0 0 0 2px rgba(245,168,0,.35);}
+.cuerpo-seccion{padding:18px;background:var(--grad-superficie);}
+
+/* --- Tarjetas KPI --- */
+.grilla-kpi{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:26px;}
+.grilla-kpi.cinco{grid-template-columns:repeat(5,1fr);}
+.grilla-kpi > *{min-width:0;}
+.kpi{
+  background:var(--grad-superficie);border:1px solid var(--linea);border-radius:var(--radio);
+  padding:17px 18px 15px;position:relative;overflow:hidden;box-shadow:var(--sombra-1);
+  transition:transform var(--normal) var(--curva),box-shadow var(--normal) var(--curva);
+}
+.kpi::before{
+  content:"";position:absolute;top:0;left:0;width:100%;height:3px;
+  background:var(--tinta);transition:background var(--normal) var(--curva);
+}
+.kpi:hover{transform:translateY(-2px);box-shadow:var(--sombra-3);}
+.kpi:hover::before{background:var(--grad-ambar);}
+.kpi .titulo{
+  font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.11em;
+  color:var(--texto-muy-tenue);margin-bottom:10px;
+}
+.kpi .valor{
+  font-size:34px;font-weight:900;line-height:1;letter-spacing:-.035em;
+  font-variant-numeric:tabular-nums;
+}
+.grilla-kpi.cinco .kpi .valor{font-size:27px;}
+.kpi .unidad{font-size:12px;font-weight:700;color:var(--texto-muy-tenue);margin-left:6px;letter-spacing:0;}
+.kpi .pie{
+  margin-top:12px;padding-top:10px;border-top:1px solid var(--linea);
+  font-size:11.5px;color:var(--texto-tenue);display:flex;flex-wrap:wrap;gap:5px 10px;align-items:center;
+}
+.kpi .secundario{margin-top:10px;font-size:12.5px;color:var(--texto-tenue);}
+.kpi .secundario b{font-weight:900;color:var(--texto);font-size:15px;font-variant-numeric:tabular-nums;}
+.kpi.error{background:linear-gradient(180deg,#FEF7F6 0%,#FDF1F0 100%);border-color:#F0D4D1;}
+.kpi.error::before{background:var(--negativo);}
+.kpi .msj-error{font-size:12px;color:var(--negativo);font-weight:700;line-height:1.4;}
+
+.var{font-weight:900;white-space:nowrap;font-variant-numeric:tabular-nums;}
+.var.sube{color:var(--alerta);}
+.var.baja{color:var(--negativo);}
+.var.plana{color:var(--texto-tenue);}
+.var.nula{color:var(--texto-muy-tenue);font-weight:700;}
+.kpi .pie .var.sube{background:var(--amarillo-suave);padding:2px 8px;border-radius:100px;border:1px solid rgba(245,168,0,.3);}
+.kpi .pie .var.baja{background:#FDF1F0;padding:2px 8px;border-radius:100px;border:1px solid #F0D4D1;}
+
+/* --- Gráficos --- */
+.caja-grafico{position:relative;width:100%;height:340px;}
+.caja-grafico.alta{height:470px;}
+.caja-grafico.baja{height:255px;}
+.grilla-2{display:grid;grid-template-columns:1.45fr 1fr;gap:18px;}
+.grilla-mitad{display:grid;grid-template-columns:1fr 1fr;gap:18px;}
+.grilla-evolucion{display:grid;grid-template-columns:1fr 1fr;gap:18px;}
+
+/* CORRECCIÓN DE DESBORDE
+   Los hijos de una grilla tienen min-width:auto, así que no se encogen por debajo
+   del ancho mínimo de su contenido. Una tabla ancha empujaba la columna y el bloque
+   se salía del contenedor. Con min-width:0 la tabla vuelve a caber y su propio
+   envoltorio se encarga del desplazamiento horizontal. */
+.grilla-2 > *,.grilla-mitad > *,.grilla-evolucion > *{min-width:0;}
+.cuerpo-seccion > div{max-width:100%;}
+
+.grilla-evolucion .mini{
+  border:1px solid var(--linea);border-radius:var(--radio);overflow:hidden;
+  background:var(--superficie);box-shadow:var(--sombra-1);
+  transition:box-shadow var(--normal) var(--curva),transform var(--normal) var(--curva);
+}
+.grilla-evolucion .mini:hover{box-shadow:var(--sombra-2);transform:translateY(-1px);}
+.grilla-evolucion .mini h3{
+  font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:.1em;
+  padding:10px 14px;background:var(--velo);border-bottom:1px solid var(--linea);color:var(--texto);
+}
+.grilla-evolucion .mini .cuerpo{padding:14px;}
+.grilla-evolucion .mini .caja-grafico{height:255px;}
+
+/* --- Tablas --- */
+.envoltorio-tabla{
+  overflow-x:auto;border:1px solid var(--linea);border-radius:var(--radio);
+  background:var(--blanco);max-width:100%;
+}
+.envoltorio-tabla.limitada{max-height:540px;overflow-y:auto;}
+table.datos{font-size:12.5px;min-width:720px;}
+table.datos.compacta{min-width:0;}
+table.datos thead th{
+  background:var(--tinta);color:var(--blanco);font-weight:700;text-align:right;
+  padding:10px 12px;white-space:nowrap;position:sticky;top:0;z-index:2;
+  font-size:10.5px;text-transform:uppercase;letter-spacing:.07em;
+  border-bottom:2px solid var(--amarillo);
+}
+table.datos thead th.izq{text-align:left;}
+table.datos thead th.ordenable{cursor:pointer;user-select:none;transition:color var(--rapido) var(--curva);}
+table.datos thead th.ordenable:hover{color:var(--ambar-alto);}
+table.datos thead th .ind{opacity:.32;margin-left:6px;font-size:9px;}
+table.datos thead th.ord-asc .ind,table.datos thead th.ord-desc .ind{opacity:1;color:var(--amarillo);}
+table.datos thead tr.grupo th{background:var(--tinta-2);border-bottom:1px solid rgba(255,255,255,.12);text-align:center;font-size:10px;color:#C6C6D0;}
+table.datos tbody td{
+  padding:8px 12px;text-align:right;border-bottom:1px solid var(--linea);
+  font-variant-numeric:tabular-nums;white-space:nowrap;
+}
+table.datos tbody td.izq{text-align:left;font-weight:700;white-space:normal;min-width:170px;position:relative;}
+table.datos tbody td.izq.normal{font-weight:400;}
+table.datos tbody tr{transition:background var(--rapido) var(--curva);}
+table.datos tbody tr:nth-child(even){background:var(--superficie-alt);}
+table.datos tbody tr:hover{background:var(--ambar-humo);}
+table.datos tbody tr td:first-child::before{
+  content:"";position:absolute;left:0;top:0;bottom:0;width:0;
+  background:var(--grad-ambar);transition:width var(--rapido) var(--curva);
+}
+table.datos tbody tr:hover td:first-child::before{width:3px;}
+table.datos tfoot td{
+  padding:10px 12px;text-align:right;font-weight:900;background:var(--velo);
+  border-top:2px solid var(--tinta);font-variant-numeric:tabular-nums;
+}
+table.datos tfoot td.izq{text-align:left;}
+td.sep-izq,th.sep-izq{border-left:1px solid var(--linea);}
+
+.sin-dato{color:var(--texto-muy-tenue);font-style:italic;font-weight:400;}
+.cero{color:var(--texto);font-weight:700;}
+
+.barra-prop{display:block;height:4px;background:var(--linea);margin-top:4px;border-radius:100px;overflow:hidden;}
+.barra-prop i{display:block;height:100%;background:var(--grad-ambar);border-radius:100px;transition:width var(--normal) var(--curva);}
+
+/* --- Ranking --- */
+ol.ranking{list-style:none;margin:0;padding:0;counter-reset:r;}
+ol.ranking li{
+  counter-increment:r;display:flex;align-items:center;gap:14px;
+  padding:10px 8px;border-bottom:1px solid var(--linea);font-size:13px;
+  border-radius:var(--radio-xs);transition:background var(--rapido) var(--curva);
+}
+ol.ranking li:hover{background:var(--ambar-humo);}
+ol.ranking li:last-child{border-bottom:none;}
+ol.ranking li::before{
+  content:counter(r);flex:none;width:24px;height:24px;background:var(--tinta);color:var(--blanco);
+  font-size:11px;font-weight:900;display:flex;align-items:center;justify-content:center;
+  border-radius:var(--radio-xs);box-shadow:var(--sombra-1);
+}
+ol.ranking li:nth-child(-n+3)::before{background:var(--grad-ambar);color:var(--tinta);}
+ol.ranking li .nom{flex:1;min-width:0;font-weight:700;}
+ol.ranking li .num{font-weight:900;font-variant-numeric:tabular-nums;}
+ol.ranking li .sec{font-size:11.5px;color:var(--texto-muy-tenue);font-weight:400;}
+
+/* --- Estados --- */
+.esqueleto{background:linear-gradient(90deg,#EFEFF2 25%,#E4E4E9 37%,#EFEFF2 63%);background-size:400% 100%;animation:brillo 1.4s ease-in-out infinite;border-radius:var(--radio-xs);}
+@keyframes brillo{0%{background-position:100% 50%}100%{background-position:0 50%}}
+#capa-carga{
+  position:fixed;inset:0;background:var(--blanco);z-index:400;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;
+}
+#capa-carga.oculta{display:none;}
+#capa-carga .aro{
+  width:40px;height:40px;border:3px solid var(--linea);border-top-color:var(--amarillo);
+  border-radius:50%;animation:girar .8s linear infinite;
+}
+@keyframes girar{to{transform:rotate(360deg)}}
+#capa-carga .txt{font-size:14px;font-weight:900;color:var(--texto);letter-spacing:-.01em;}
+#capa-carga .detalle{font-size:12px;color:var(--texto-muy-tenue);}
+
+.bloque-error{
+  background:linear-gradient(180deg,#FEF7F6 0%,#FDF1F0 100%);
+  border:1px solid #F0D4D1;border-left:3px solid var(--negativo);
+  border-radius:var(--radio);padding:17px 19px;font-size:13px;color:#7A1C16;box-shadow:var(--sombra-1);
+}
+.bloque-error strong{display:block;font-weight:900;margin-bottom:5px;}
+.bloque-error code{font-size:11.5px;background:rgba(0,0,0,.05);padding:2px 6px;border-radius:4px;word-break:break-all;}
+
+.nota{font-size:11.5px;color:var(--texto-muy-tenue);margin-top:12px;line-height:1.55;max-width:105ch;}
+.vacio{padding:38px;text-align:center;color:var(--texto-muy-tenue);font-size:13px;}
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+@media (max-width:1180px){
+  .grilla-2,.grilla-mitad,.grilla-evolucion{grid-template-columns:1fr;}
+  .grilla-kpi{grid-template-columns:repeat(2,1fr);}
+  .grilla-kpi.cinco{grid-template-columns:repeat(3,1fr);}
+}
+@media (max-width:820px){
+  main{padding:18px 14px 52px;}
+  #banner,#barra-filtros{padding-left:16px;padding-right:16px;}
+  #banner .marca span{display:none;}
+  .grilla-kpi,.grilla-kpi.cinco{grid-template-columns:1fr;}
+  #chips-filtros{margin-left:0;width:100%;}
+  .encabezado-vista h1{font-size:23px;}
+}
+
+/* ============================================================
+   IMPRESIÓN
+   El PDF no hereda el tema de pantalla: se imprime plano, sin sombras
+   ni degradados de superficie. Los degradados suaves salen sucios en tóner.
+   ============================================================ */
+#cabecera-impresion{display:none;}
+
+@media print{
+  @page{size:letter landscape;margin:11mm 10mm 12mm;}
+  html,body{background:#fff !important;font-size:9pt;}
+  #cabecera,#barra-filtros,#capa-carga,#btn-pdf,.seccion > header select,.multi,
+  .filtros-locales select,.filtros-locales button{display:none !important;}
+  main{padding:0;max-width:none;}
+  .vista{display:none !important;}
+  .vista.activa{display:block !important;animation:none;}
+
+  /* Se aplana todo: sin sombras, sin degradados, sin esquinas redondeadas. */
+  .seccion,.kpi,.envoltorio-tabla,.filtros-locales,.aviso,.bloque-error,
+  .grilla-evolucion .mini,.chip,ol.ranking li::before{
+    box-shadow:none !important;border-radius:0 !important;
+  }
+  .kpi,.cuerpo-seccion,.filtros-locales,.grilla-evolucion .mini h3{background:#fff !important;}
+  .seccion:hover{box-shadow:none !important;}
+  .seccion > header::before,.kpi::before{display:none;}
+  table.datos tbody tr td:first-child::before{display:none;}
+
+  #cabecera-impresion{display:block;border-bottom:3px solid #000;padding-bottom:7px;margin-bottom:12px;}
+  #cabecera-impresion .fila-sup{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;}
+  #cabecera-impresion .inst{font-size:14pt;font-weight:900;line-height:1.1;}
+  #cabecera-impresion .inst span{display:block;font-size:7.5pt;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:#444;margin-top:2px;}
+  #cabecera-impresion .der{text-align:right;font-size:7.5pt;color:#333;line-height:1.4;}
+  #cabecera-impresion .der b{display:block;font-size:10pt;color:#000;}
+  #cabecera-impresion .filtros{margin-top:7px;font-size:7.5pt;color:#333;line-height:1.4;border-top:1px solid #CCC;padding-top:5px;}
+  #cabecera-impresion .filtros b{font-weight:900;color:#000;}
+
+  .encabezado-vista{margin-bottom:9px;}
+  .encabezado-vista h1{font-size:12pt;}
+  .encabezado-vista h1 .sub{font-size:7pt;}
+  .encabezado-vista .periodo{background-image:none;border-bottom:2px solid #000;}
+
+  .seccion,.kpi,.envoltorio-tabla,.caja-grafico,.grilla-evolucion .mini{break-inside:avoid;page-break-inside:avoid;}
+  .seccion{margin-bottom:11px;border:1px solid #CCC;}
+  .seccion > header{padding:5px 9px;background:#000 !important;}
+  .seccion > header h2{font-size:8pt;}
+  .cuerpo-seccion{padding:9px;}
+  .filtros-locales{padding:5px 9px;margin-bottom:9px;font-size:7.5pt;border:1px solid #CCC;}
+
+  .grilla-kpi{grid-template-columns:repeat(4,1fr);gap:7px;margin-bottom:11px;}
+  .grilla-kpi.cinco{grid-template-columns:repeat(5,1fr);}
+  .kpi{padding:8px 9px;border:1px solid #CCC;}
+  .kpi .valor{font-size:16pt;}
+  .grilla-kpi.cinco .kpi .valor{font-size:13pt;}
+  .kpi .titulo{font-size:6.5pt;margin-bottom:5px;}
+  .kpi .pie,.kpi .secundario{font-size:7pt;}
+
+  .grilla-2{grid-template-columns:1.45fr 1fr;gap:10px;}
+  .grilla-mitad,.grilla-evolucion{grid-template-columns:1fr 1fr;gap:10px;}
+  .caja-grafico{height:70mm;}
+  .caja-grafico.alta{height:88mm;}
+  .caja-grafico.baja{height:55mm;}
+  .grilla-evolucion .mini .caja-grafico{height:52mm;}
+
+  table.datos{font-size:7pt;min-width:0;}
+  table.datos thead th{padding:4px 5px;font-size:6.5pt;position:static;background:#000 !important;color:#fff !important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+  table.datos tbody td{padding:3px 5px;}
+  table.datos tbody tr:hover{background:transparent;}
+  table.datos thead{display:table-header-group;}
+  table.datos tfoot td{padding:4px 5px;background:#F2F2F2 !important;}
+  .envoltorio-tabla.limitada{max-height:none;overflow:visible;}
+  ol.ranking li{padding:3px 2px;font-size:7pt;}
+  ol.ranking li::before{width:14px;height:14px;font-size:6pt;background:#000 !important;color:#fff !important;}
+
+  .aviso{display:flex !important;background:#FFF6E3 !important;-webkit-print-color-adjust:exact;print-color-adjust:exact;padding:6px 9px;font-size:7.5pt;margin-bottom:9px;border:1px solid #E0B860;}
+  .aviso:not(.visible){display:none !important;}
+  .nota{font-size:6.5pt;}
+
+  .kpi,table.datos tbody tr:nth-child(even),table.datos tfoot td,
+  .var.sube,.var.baja,.barra-prop i{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+}
+</style>
+</head>
+<body>
+
+<!-- Encabezado que solo aparece en el PDF -->
+<div id="cabecera-impresion">
+  <div class="fila-sup">
+    <div class="inst">
+      Bibliotecas Duoc UC
+      <span id="imp-vista">Resumen</span>
+    </div>
+    <div class="der">
+      Indicadores de gestión
+      <b id="imp-periodo">—</b>
+      Generado el <span id="imp-generado">—</span>
+    </div>
+  </div>
+  <div class="filtros"><b>Filtros aplicados:</b> <span id="imp-filtros">—</span></div>
+</div>
+
+<header id="cabecera">
+  <div id="banner">
+    <div class="marca">
+      <strong>Bibliotecas Duoc UC</strong>
+      <span>Indicadores de gestión</span>
+    </div>
+    <div class="espaciador"></div>
+    <div class="meta">
+      <b id="meta-periodo">Cargando…</b>
+      <span id="meta-actualizacion">Descargando datos</span>
+      <span id="meta-version" style="display:block;color:#8A8A8A;font-size:10px;"></span>
+    </div>
+  </div>
+  <nav id="menu"></nav>
+</header>
+
+<div id="barra-filtros">
+  <div class="grupo-filtro">
+    <label for="btn-sedes">Sede</label>
+    <div class="multi" id="multi-sedes">
+      <button id="btn-sedes" type="button" aria-expanded="false">
+        <span id="etq-sedes">Todas</span><span class="flecha">&#9660;</span>
+      </button>
+      <div class="multi-panel" id="panel-sedes">
+        <div class="acciones">
+          <button type="button" data-accion="todas">Todas</button>
+          <button type="button" data-accion="limpiar">Limpiar</button>
+        </div>
+        <div class="lista" id="lista-sedes"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="grupo-filtro">
+    <label for="sel-mes">Mes</label>
+    <select class="control" id="sel-mes"></select>
+  </div>
+
+  <div class="grupo-filtro">
+    <label for="sel-anio">Año</label>
+    <select class="control" id="sel-anio"></select>
+  </div>
+
+  <div id="chips-filtros"></div>
+  <button id="btn-pdf" type="button">Descargar PDF</button>
+</div>
+
+<main id="contenido"></main>
+
+<div id="capa-carga">
+  <div class="aro"></div>
+  <div class="txt">Cargando indicadores de gestión</div>
+  <div class="detalle" id="detalle-carga">Preparando…</div>
+</div>
+
+<script>
+"use strict";
+/* ==================================================================================
+   DASHBOARD DE INDICADORES DE GESTIÓN · BIBLIOTECAS DUOC UC
+   Archivo único, sin build step. Datos en vivo desde Google Sheets publicado en CSV.
+   ================================================================================== */
+
+const CONFIG = {
+
+  institucion: "Bibliotecas Duoc UC",
+  subtitulo: "Indicadores de gestión",
+  version: "v8 · 2026-07-27",
+
+  /* Libro publicado. Cada indicador apunta a una pestaña por su gid. */
+  libro: "2PACX-1vSnXomreT9d7YMgsZCsb8Gsm8MY58G9_AsukqaQfx2soRc3QT3L5j5xlVCCDGIpyaqp40_WM4wCKQkF",
+
+  /* Las hojas usan M/D/AAAA (3/23/2026 = 23 de marzo). Igual se verifica contra los
+     datos al leer: si la evidencia dice lo contrario, se corrige sola. */
+  formatoFecha: "MDY",
+
+  sedes: {
+    canonicas: [
+      "Alameda", "Antonio Varas", "Arauco", "Campus Virtual", "Casa Central",
+      "Maipú", "Melipilla", "Nacimiento", "Padre Alonso de Ovalle", "Plaza Norte",
+      "Plaza Oeste", "Plaza Vespucio", "Puente Alto", "Puerto Montt",
+      "San Andrés de Concepción", "San Bernardo", "San Carlos de Apoquindo",
+      "San Joaquín", "Valparaíso", "Valparaíso LC", "Villarrica", "Viña del Mar"
+    ],
+    /* Solo hacen falta alias cuando el nombre difiere de verdad; las diferencias de
+       mayúsculas o tildes se resuelven solas. */
+    alias: {
+      "Campus Arauco": "Arauco",
+      "Campus Nacimiento": "Nacimiento",
+      "Campus Villarrica": "Villarrica",
+      "Alonso Ovalle": "Padre Alonso de Ovalle",
+      "Concepción": "San Andrés de Concepción",
+      "San Carlos": "San Carlos de Apoquindo",
+      "Valparaísp": "Valparaíso",          // typo en la fuente: 10.937 registros
+      "Luis Cousiño": "Valparaíso LC"      // por confirmar con Subdirección
+    },
+    excluidas: ["Liceo Andes (Renca)", "Quillota", "Educacion Continua",
+                "[No Aplica]", "[No Identificado]", "No Aplica", "No Identificado"]
+  },
+
+  /* Etiqueta para las celdas sin valor en una dimensión. */
+  etiquetaVacio: "Sin registrar",
+
+  /* --------------------------------------------------------------------------------
+     INDICADORES
+
+     `dimensiones` declara qué desgloses conserva el parser. Cada uno se guarda como
+     un cubo sede × mes × valor, no como filas: por eso se pueden mostrar cortes por
+     carrera o perfil sin retener las 318.000 filas originales en memoria.
+
+     `detalle: true` (solo Acciones Formativas) guarda además las filas en forma
+     compacta, porque esa vista necesita filtros propios y contar RUT únicos.
+     -------------------------------------------------------------------------------- */
+  indicadores: [
+    {
+      id: "material_fisico",
+      nombre: "Material Físico",
+      nombreCorto: "M. Físico",
+      archivoPdf: "m-fisico",
+      unidad: "transacciones",
+      gid: "76327962",
+      col: { sede: "BIB. PRESTAMO", fecha: "Fecha" },
+      metricaPrincipal: { id: "valor", etiqueta: "Transacciones" },
+      dimensiones: {
+        tipo:     { col: "TIPO TRANSACCION", etiqueta: "Tipo de transacción" },
+        estacion: { col: "ESTACION TRANSACCION", etiqueta: "Lugar de la transacción" },
+        perfil:   { col: "PERFIL", etiqueta: "Perfil de usuario" },
+        carrera:  { col: "CARRERA", etiqueta: "Carrera" },
+        item:     { col: "TIPO ITEM", etiqueta: "Tipo de material" },
+        /* Dimensiones cruzadas: guardan la combinación de dos columnas para poder
+           separar préstamos de renovaciones dentro de cada modalidad o perfil.
+           Los préstamos solo salen por mesón o autopréstamo; las renovaciones suman
+           además la vía en línea. Sin el cruce esa distinción no se puede hacer. */
+        tipoEstacion: { cols: ["TIPO TRANSACCION", "ESTACION TRANSACCION"], etiqueta: "Tipo × lugar" },
+        tipoPerfil:   { cols: ["TIPO TRANSACCION", "PERFIL"], etiqueta: "Tipo × perfil" },
+        tipoItem:     { cols: ["TIPO TRANSACCION", "TIPO ITEM"], etiqueta: "Tipo × material" },
+        tipoCarrera:  { cols: ["TIPO TRANSACCION", "CARRERA"], etiqueta: "Tipo × carrera" }
+      },
+      nota: "Incluye todas las transacciones registradas: préstamos, renovaciones, uso en sala, exposiciones, préstamo intersede, digitalización y missing."
+    },
+    {
+      id: "transacciones_digitales",
+      nombre: "Transacciones Digitales",
+      nombreCorto: "T. Digital",
+      archivoPdf: "t-digital",
+      unidad: "accesos",
+      gid: "669058451",
+      col: { sede: "Sede", fecha: "Dia" },
+      metricaPrincipal: { id: "valor", etiqueta: "Accesos" },
+      dimensiones: {
+        categoria: { col: "Identificación 1", etiqueta: "Tipo de recurso" },
+        recurso:   { col: "Identificación 2", etiqueta: "Recurso digital" },
+        carrera:   { col: "Carrera", etiqueta: "Carrera" },
+        perfil:    { col: "Tipo Usuario", etiqueta: "Perfil de usuario" }
+      },
+      /* Identidad para contar usuarios únicos. Se usa el RUT y no el nombre de usuario
+         porque identifica personas: hay 33 RUT con más de una cuenta asociada. */
+      colUnico: "Rut",
+      nota: "Cada registro es un acceso a un recurso digital, no un usuario único."
+    },
+    {
+      id: "cuenta_personas",
+      nombre: "Cuenta Personas",
+      nombreCorto: "Cuenta Personas",
+      archivoPdf: "cuenta-personas",
+      unidad: "ingresos",
+      gid: "954330324",
+      tipoHoja: "matriz",
+      col: { sede: "Sede" },
+      metricaPrincipal: { id: "valor", etiqueta: "Ingresos" },
+      dimensiones: {},
+      /* Campus Virtual y Casa Central no tienen espacio físico ni arcos de conteo:
+         no corresponde que aparezcan en esta vista ni en sus totales de sedes. */
+      sedesExcluidas: ["Campus Virtual", "Casa Central"],
+      nota: "Mide ingresos a la biblioteca, no personas distintas: un mismo estudiante que entra veinte veces cuenta veinte veces."
+    },
+    {
+      id: "acciones_formativas",
+      nombre: "Acciones Formativas",
+      nombreCorto: "Acciones Formativas",
+      archivoPdf: "acciones-formativas",
+      unidad: "participaciones",
+      gid: "2062982813",
+      col: { sede: "Nombre sede envío", fecha: "Fecha de ejecución" },
+      metricaPrincipal: { id: "asistentes", etiqueta: "Participaciones" },
+      /* Una actividad = sede + fecha + nombre oficial. */
+      claveActividad: ["fecha", "accion"],
+      detalle: true,
+      dimensiones: {
+        accion:      { col: "Nombre oficial acc. Formativa", etiqueta: "Acción formativa" },
+        actividad:   { col: "Actividad", etiqueta: "Tipo de actividad" },
+        carrera:     { col: "Carrera", etiqueta: "Carrera" },
+        tipoUsuario: { col: "Tipo de Usuario", etiqueta: "Jornada del participante" },
+        formato:     { col: "Formato", etiqueta: "Formato" },
+        ia:          { col: "Taller IA?", etiqueta: "Taller de IA" }
+      },
+      colRut: "Rut participantes",
+      nota: "Las participaciones son asistencias registradas, no personas distintas."
+    }
+  ],
+
+  /* --------------------------------------------------------------------------------
+     CRITERIOS DE CONTEO
+     Decisiones metodológicas acordadas con Subdirección. Cambiar acá, no en la lógica.
+     -------------------------------------------------------------------------------- */
+  criterios: {
+    /* Lugar de la transacción: solo las modalidades reales de atención.
+       Se excluyen «WORKFLOW - NO SUMAR» (uso en sala, intersede, expo, missing y
+       digitalización: nunca pudieron ser autoservicio) y «DIA DEL LIBRO».
+       Así el porcentaje de autopréstamo mide adopción sobre lo que sí es comparable. */
+    modalidadesAtencion: ["MESON DE ATENCION", "EN LINEA", "AUTOPRESTAMO"],
+
+    /* «Préstamos totales» de la vista M. Físico: solo el préstamo propiamente tal. */
+    tipoPrestamoPuro: "PRESTAMO",
+    tipoRenovacion: "RENOVACION",
+
+    /* Carreras: valores que significan «sin carrera asociada» y se agrupan aparte. */
+    sinCarrera: ["No Aplica", "[No Aplica]", "", "No aplica", "[No aplica]"],
+    etiquetaSinCarrera: "No aplica",
+
+    /* Modalidades posibles según el tipo de transacción, verificado en los datos:
+       un préstamo nunca sale «en línea» y una renovación sí. */
+    modalidadesPrestamo:   ["MESON DE ATENCION", "AUTOPRESTAMO"],
+    modalidadesRenovacion: ["MESON DE ATENCION", "AUTOPRESTAMO", "EN LINEA"],
+
+    /* Perfiles operativos de M. Físico que no corresponden a un usuario real. */
+    perfilesOperativos: ["Exposición", "Prestamos Intersede",
+                         "Perfil utilizado para prestar items EXTRAVIADOS", "Administrador del sistema"],
+
+    topCarreras: 15,     // M. Físico: top N + «Otras»
+    topRecursos: 20,     // T. Digital: top N + «Otros»
+    topTalleres: 10
+  },
+
+  valoresSinDato: ["", "-", "--", "s/i", "s/d", "sin dato", "sin datos", "n/a", "na", "nd", "n/d", "null", "#n/a", "#¡div/0!", "#div/0!", "#value!", "#ref!", "."],
+  meses: ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"],
+  mesesCortos: ["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"],
+
+  colores: {
+    negro: "#000000",
+    amarillo: "#F5A800",
+    grisSerie: "#B5B5B5",
+    grisTenue: "#DCDCDC",
+    /* Paleta para desgloses categóricos: negro y amarillo primero, después neutros. */
+    categorias: ["#0B0B0D","#F5A800","#6E6E7A","#FFC24D","#2E2E36","#B5B5BE",
+                 "#D99400","#4A4A54","#FFD98A","#9A9AA6","#17171B","#DCDCE2"]
+  }
+};
+
+const ALIAS_MESES = {
+  ene:1, enero:1, jan:1, january:1, feb:2, febrero:2, february:2,
+  mar:3, marzo:3, march:3, abr:4, abril:4, apr:4, april:4, may:5, mayo:5,
+  jun:6, junio:6, june:6, jul:7, julio:7, july:7, ago:8, agosto:8, aug:8, august:8,
+  sep:9, sept:9, septiembre:9, setiembre:9, september:9, oct:10, octubre:10, october:10,
+  nov:11, noviembre:11, november:11, dic:12, diciembre:12, dec:12, december:12
+};
+
+function urlHoja(gid){
+  return "https://docs.google.com/spreadsheets/d/e/" + CONFIG.libro +
+         "/pub?gid=" + gid + "&single=true&output=csv";
+}
+
+/* ==================================================================================
+   ESTADO
+   ================================================================================== */
+const ESTADO = {
+  datos: {},              // por indicador: { estado, error, cubos, total, sedes, anios, detalle }
+  sedes: [], anios: [],
+  vistaActiva: "resumen",
+  cargadoEn: null,
+  hayComparacion: false,
+  periodoReporte: null,
+  periodoSolicitado: null,
+  retrocedio: false,
+  filtros: {
+    sedes: new Set(),     // vacío = todas
+    mes: null,            // null = «Todos» (acumulado del año)
+    anio: null
+  },
+  /* Filtros propios de la vista Acciones Formativas. */
+  filtrosAF: { actividad: "", accion: "", carrera: "", ia: "" },
+  graficos: {},
+  orden: {}
+};
+
+/* Registro interno de saneamiento. No se muestra en la interfaz: el dashboard lo ven
+   usuarios externos y no corresponde exponer inconsistencias de la fuente. Queda en
+   la consola del navegador para revisión técnica. */
+const DIAGNOSTICO = [];
+function anotar(tipo, texto){
+  const linea = "[" + tipo + "] " + texto;
+  if (DIAGNOSTICO.includes(linea)) return;
+  DIAGNOSTICO.push(linea);
+  console.warn("Bibliotecas Duoc UC · " + linea);
+}
+
+/* ==================================================================================
+   UTILIDADES
+   ================================================================================== */
+function norm(t){
+  return String(t == null ? "" : t)
+    .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase().replace(/\s+/g, " ").trim();
+}
+function clave(t){ return norm(t).replace(/[^a-z0-9]/g, ""); }
+
+function parsearNumero(bruto){
+  if (bruto === null || bruto === undefined) return null;
+  if (typeof bruto === "number") return Number.isFinite(bruto) ? bruto : null;
+  let t = String(bruto).trim();
+  if (CONFIG.valoresSinDato.includes(norm(t))) return null;
+  t = t.replace(/[\s  ]/g, "").replace(/[$%]/g, "");
+  if (t === "") return null;
+  const negativo = /^\(.*\)$/.test(t);
+  if (negativo) t = t.slice(1, -1);
+  const tienePunto = t.includes("."), tieneComa = t.includes(",");
+  if (tienePunto && tieneComa){
+    if (t.lastIndexOf(",") > t.lastIndexOf(".")) t = t.replace(/\./g, "").replace(",", ".");
+    else t = t.replace(/,/g, "");
+  } else if (tieneComa){
+    t = /^\d{1,3}(,\d{3})+$/.test(t) ? t.replace(/,/g, "") : t.replace(",", ".");
+  } else if (tienePunto){
+    if (/^\d{1,3}(\.\d{3})+$/.test(t)) t = t.replace(/\./g, "");
+  }
+  if (!/^-?\d*\.?\d+$/.test(t)) return null;
+  const n = parseFloat(t);
+  if (!Number.isFinite(n)) return null;
+  return negativo ? -n : n;
+}
+
+function validaPeriodo(anio, mes){
+  if (!Number.isInteger(anio) || !Number.isInteger(mes)) return null;
+  if (anio < 1990 || anio > 2100 || mes < 1 || mes > 12) return null;
+  return { anio, mes };
+}
+function mesDesdeTexto(txt){
+  const n = norm(txt).replace(/\./g, "").trim();
+  if (ALIAS_MESES[n]) return ALIAS_MESES[n];
+  return ALIAS_MESES[n.slice(0, 3)] || null;
+}
+
+function parsearPeriodo(bruto, formato){
+  if (bruto === null || bruto === undefined) return null;
+  if (bruto instanceof Date && !isNaN(bruto)) return { anio: bruto.getFullYear(), mes: bruto.getMonth() + 1 };
+  const t = String(bruto).trim();
+  if (t === "") return null;
+  let m;
+  m = t.match(/^(\d{4})[-\/.](\d{1,2})(?:[-\/.](\d{1,2}))?/);
+  if (m) return validaPeriodo(+m[1], +m[2]);
+  m = t.match(/^(\d{1,2})[-\/.](\d{1,2})[-\/.](\d{2,4})/);
+  if (m){
+    let a = +m[3]; if (a < 100) a += 2000;
+    const p1 = +m[1], p2 = +m[2];
+    if (p1 > 12 && p2 <= 12) return validaPeriodo(a, p2);
+    if (p2 > 12 && p1 <= 12) return validaPeriodo(a, p1);
+    return validaPeriodo(a, (formato || CONFIG.formatoFecha) === "MDY" ? p1 : p2);
+  }
+  m = t.match(/^(\d{1,2})[-\/.](\d{4})$/);
+  if (m) return validaPeriodo(+m[2], +m[1]);
+  m = t.match(/^(\d{4})(\d{2})$/);
+  if (m) return validaPeriodo(+m[1], +m[2]);
+  const n = norm(t);
+  const cn = n.match(/^([a-z]+)\.?[\s\-\/]*(\d{2,4})$/) || n.match(/^(\d{4})[\s\-\/]*([a-z]+)\.?$/);
+  if (cn){
+    const primeroTexto = isNaN(+cn[1]);
+    const txt = primeroTexto ? cn[1] : cn[2];
+    let a = +(primeroTexto ? cn[2] : cn[1]); if (a < 100) a += 2000;
+    const mes = mesDesdeTexto(txt);
+    if (mes) return validaPeriodo(a, mes);
+  }
+  const d = new Date(t);
+  if (!isNaN(d) && /\d{4}/.test(t)) return validaPeriodo(d.getFullYear(), d.getMonth() + 1);
+  return null;
+}
+
+/** Deduce M/D vs D/M mirando los datos: un componente > 12 no deja lugar a dudas. */
+function detectarFormatoFecha(valores){
+  let mdy = 0, dmy = 0;
+  for (const v of valores){
+    const m = String(v == null ? "" : v).trim().match(/^(\d{1,2})[-\/.](\d{1,2})[-\/.](\d{2,4})/);
+    if (!m) continue;
+    const p1 = +m[1], p2 = +m[2];
+    if (p1 > 12 && p2 <= 12) dmy++;
+    else if (p2 > 12 && p1 <= 12) mdy++;
+  }
+  if (mdy === 0 && dmy === 0) return null;
+  return { formato: mdy >= dmy ? "MDY" : "DMY", mdy, dmy, conflicto: mdy > 0 && dmy > 0 };
+}
+
+/* ---------- Formateo chileno ---------- */
+const FMT_ENTERO  = new Intl.NumberFormat("es-CL", { maximumFractionDigits: 0 });
+const FMT_DECIMAL = new Intl.NumberFormat("es-CL", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+
+function fmt(n){
+  if (n === null || n === undefined || !Number.isFinite(n)) return '<span class="sin-dato">sin dato</span>';
+  if (n === 0) return '<span class="cero">0</span>';
+  return FMT_ENTERO.format(Math.round(n));
+}
+function fmtTxt(n){
+  if (n === null || n === undefined || !Number.isFinite(n)) return "sin dato";
+  return FMT_ENTERO.format(Math.round(n));
+}
+function pct(parte, total){
+  if (!total || parte === null || parte === undefined) return "—";
+  return FMT_DECIMAL.format((parte / total) * 100) + "%";
+}
+function variacion(actual, anterior){
+  if (actual === null || anterior === null || anterior === 0) return null;
+  return ((actual - anterior) / anterior) * 100;
+}
+function htmlVariacion(v, conFlecha){
+  if (v === null) return '<span class="var nula">n/a</span>';
+  const cls = v > 0.05 ? "sube" : (v < -0.05 ? "baja" : "plana");
+  const flecha = conFlecha === false ? "" : (v > 0.05 ? "▲ " : (v < -0.05 ? "▼ " : "= "));
+  return '<span class="var ' + cls + '">' + flecha + (v > 0 ? "+" : "") + FMT_DECIMAL.format(v) + "%</span>";
+}
+function escapar(t){
+  return String(t == null ? "" : t).replace(/&/g, "&amp;").replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+}
+function nombreMes(m){ return CONFIG.meses[m - 1] || "—"; }
+function etiquetaPeriodo(p){ return p ? nombreMes(p.mes) + " " + p.anio : "—"; }
+
+/* ==================================================================================
+   CARGA
+   ================================================================================== */
+async function cargarTodo(){
+  const total = CONFIG.indicadores.length;
+  let listas = 0;
+  const avisar = (nombre) => {
+    listas++;
+    const el = document.getElementById("detalle-carga");
+    if (el) el.textContent = "Procesando " + listas + " de " + total + " hojas · " + nombre;
+  };
+
+  /* allSettled y no all: si una hoja falla, el resto del dashboard sigue funcionando. */
+  const resultados = await Promise.allSettled(CONFIG.indicadores.map(ind =>
+    descargarHoja(ind).then(r => { avisar(ind.nombre); return r; },
+                            e => { avisar(ind.nombre); throw e; })));
+
+  resultados.forEach((r, i) => {
+    const ind = CONFIG.indicadores[i];
+    if (r.status === "fulfilled") ESTADO.datos[ind.id] = r.value;
+    else {
+      const msj = (r.reason && r.reason.message) ? r.reason.message : "error desconocido";
+      ESTADO.datos[ind.id] = { estado: "error", error: msj, cubos: {}, total: new Map(),
+                               actividades: null, unicos: null, totalUnicos: 0,
+                               sedes: new Set(), anios: new Set(), detalle: null };
+      anotar("Carga", "No se pudo cargar «" + ind.nombre + "»: " + msj);
+    }
+  });
+
+  ESTADO.cargadoEn = new Date();
+  consolidarUniverso();
+}
+
+function esOrigenLocal(){
+  try { return location.protocol === "file:" || location.origin === "null" || location.origin === ""; }
+  catch (e){ return false; }
+}
+
+async function descargarHoja(ind){
+  const url = urlHoja(ind.gid);
+  let texto;
+  try {
+    const resp = await fetch(url, { cache: "no-store", redirect: "follow" });
+    if (!resp.ok) throw new Error("HTTP " + resp.status + " " + resp.statusText);
+    texto = await resp.text();
+  } catch (e){
+    if (esOrigenLocal()){
+      throw new Error("El navegador bloqueó la descarga porque el dashboard se abrió como archivo local (file://). " +
+        "Necesita ejecutarse desde un servidor web: súbelo a GitHub Pages o levanta un servidor local.");
+    }
+    throw new Error("No se pudo descargar el CSV (" + e.message + "). Verifica que la hoja siga publicada en la web.");
+  }
+  if (/^\s*<(!doctype|html)/i.test(texto)){
+    throw new Error("La URL no devolvió un CSV. Es probable que la hoja ya no esté publicada o que el gid haya cambiado.");
+  }
+
+  const parsed = Papa.parse(texto, { header: false, skipEmptyLines: "greedy", dynamicTyping: false });
+  if (!parsed.data || parsed.data.length === 0) throw new Error("La hoja está vacía.");
+
+  return ind.tipoHoja === "matriz" ? leerMatriz(ind, parsed.data) : leerTransaccional(ind, parsed.data);
+}
+
+/* ==================================================================================
+   LECTURA DE HOJAS TRANSACCIONALES
+
+   Se agrega al vuelo en cubos. Nunca se retienen las filas originales, salvo en
+   Acciones Formativas (26.917 filas), que se guarda en forma compacta porque su vista
+   necesita filtros propios y contar RUT únicos.
+
+   Estructura resultante:
+     total          Map("sede|anio|mes" -> conteo)
+     cubos[dim]     Map("sede|anio|mes|valor" -> conteo)
+     actividades    Map("sede|anio|mes" -> Set(claves))     solo si hay claveActividad
+     detalle        { cols, filas }  códigos enteros        solo si detalle: true
+   ================================================================================== */
+function leerTransaccional(ind, matriz){
+  const idxEnc = buscarEncabezado(matriz, [ind.col.sede, "sede", "biblioteca"]);
+  if (idxEnc === -1){
+    throw new Error("No se encontró la fila de encabezados. Se esperaba la columna «" + ind.col.sede + "».");
+  }
+  const enc = matriz[idxEnc].map(c => String(c == null ? "" : c).trim());
+  const iSede = buscarColumna(enc, ind.col.sede, ["sede", "biblioteca", "campus"]);
+  const iFecha = buscarColumna(enc, ind.col.fecha, ["fecha", "dia", "periodo"]);
+  if (iSede === -1 || iFecha === -1){
+    throw new Error("Faltan las columnas de sede o fecha. Encabezados: " + enc.filter(Boolean).join(" | "));
+  }
+
+  /* Índices de cada dimensión declarada. */
+  const dims = [];
+  for (const [id, def] of Object.entries(ind.dimensiones || {})){
+    if (def.cols){
+      /* Dimensión cruzada: el valor del cubo es la combinación de dos columnas. */
+      const idx = def.cols.map(c => buscarColumna(enc, c, []));
+      if (idx.some(i => i === -1)){
+        anotar("Formato", ind.nombre + ": faltan columnas para el cruce «" + def.etiqueta + "» (" + def.cols.join(" × ") + ").");
+      } else {
+        dims.push({ id, idx, etiqueta: def.etiqueta, cruzada: true });
+      }
+      continue;
+    }
+    const i = buscarColumna(enc, def.col, []);
+    if (i === -1) anotar("Formato", ind.nombre + ": no se encontró la columna «" + def.col + "» para el desglose «" + def.etiqueta + "».");
+    else dims.push({ id, i, etiqueta: def.etiqueta });
+  }
+  const iRut = ind.colRut ? buscarColumna(enc, ind.colRut, []) : -1;
+  /* Identidad para el conteo de únicos. Se guardan conjuntos por sede y mes: los
+     únicos NO son aditivos, así que al consultar hay que unir, nunca sumar. */
+  const iUnico = ind.colUnico ? buscarColumna(enc, ind.colUnico, []) : -1;
+  if (ind.colUnico && iUnico === -1){
+    anotar("Formato", ind.nombre + ": no se encontró la columna «" + ind.colUnico + "» para contar usuarios únicos.");
+  }
+
+  /* Orden día/mes deducido de los propios datos. */
+  const muestra = [];
+  for (let i = idxEnc + 1; i < matriz.length && muestra.length < 4000; i++){
+    if (matriz[i] && matriz[i][iFecha] != null) muestra.push(matriz[i][iFecha]);
+  }
+  const det = detectarFormatoFecha(muestra);
+  const formatoFecha = det ? det.formato : CONFIG.formatoFecha;
+  if (det && det.conflicto) anotar("Fechas", ind.nombre + ": la columna de fecha mezcla M/D y D/M (" + det.mdy + " vs " + det.dmy + "). Se usó " + det.formato + ".");
+  else if (det && det.formato !== CONFIG.formatoFecha) anotar("Fechas", ind.nombre + ": las fechas vienen en " + det.formato + " y CONFIG dice " + CONFIG.formatoFecha + ". Se usó " + det.formato + ".");
+
+  const total = new Map();
+  const cubos = {};
+  dims.forEach(d => { cubos[d.id] = new Map(); });
+  const actividades = ind.claveActividad ? new Map() : null;
+  const unicos = iUnico !== -1 ? new Map() : null;
+  const codUnico = new Map();
+  const sedes = new Set(), anios = new Set();
+  const valoresDim = {};
+  dims.forEach(d => { valoresDim[d.id] = new Set(); });
+
+  /* Almacén compacto: diccionarios de strings + filas de códigos enteros. */
+  const guardaDetalle = !!ind.detalle;
+  const dicc = {}, diccInv = {};
+  dims.forEach(d => { dicc[d.id] = new Map(); diccInv[d.id] = []; });
+  dicc.sede = new Map(); diccInv.sede = [];
+  const filasDetalle = [];
+  const rutsGlobal = guardaDetalle ? new Map() : null;
+
+  function codificar(campo, valor){
+    let c = dicc[campo].get(valor);
+    if (c === undefined){ c = diccInv[campo].length; dicc[campo].set(valor, c); diccInv[campo].push(valor); }
+    return c;
+  }
+
+  const cachePeriodo = new Map();
+  let leidas = 0, sinFecha = 0, excluidas = 0;
+
+  for (let f = idxEnc + 1; f < matriz.length; f++){
+    const fila = matriz[f];
+    if (!fila) continue;
+    const sedeBruta = fila[iSede] == null ? "" : String(fila[iSede]).trim();
+    if (sedeBruta === "" || esFilaTotal(sedeBruta)) continue;
+    leidas++;
+
+    const sede = normalizarSede(sedeBruta);
+    if (sede === null){ excluidas++; continue; }
+
+    const brutoFecha = fila[iFecha];
+    const kf = String(brutoFecha);
+    let periodo = cachePeriodo.get(kf);
+    if (periodo === undefined){ periodo = parsearPeriodo(brutoFecha, formatoFecha); cachePeriodo.set(kf, periodo); }
+    if (!periodo){ sinFecha++; continue; }
+
+    const base = sede + "|" + periodo.anio + "|" + periodo.mes;
+    total.set(base, (total.get(base) || 0) + 1);
+    sedes.add(sede); anios.add(periodo.anio);
+
+    for (const d of dims){
+      const v = valorDimension(fila, d);
+      valoresDim[d.id].add(v);
+      const k = base + "|" + v;
+      cubos[d.id].set(k, (cubos[d.id].get(k) || 0) + 1);
+    }
+
+    if (unicos){
+      const bruto = fila[iUnico] == null ? "" : String(fila[iUnico]).trim();
+      if (bruto !== ""){
+        let c = codUnico.get(bruto);
+        if (c === undefined){ c = codUnico.size; codUnico.set(bruto, c); }
+        let set = unicos.get(base);
+        if (!set){ set = new Set(); unicos.set(base, set); }
+        set.add(c);
+      }
+    }
+
+    if (actividades){
+      let set = actividades.get(base);
+      if (!set){ set = new Set(); actividades.set(base, set); }
+      const partes = ind.claveActividad.map(c => c === "fecha" ? kf : String(fila[(dims.find(d => d.id === c) || {}).i] || ""));
+      set.add(partes.join(""));
+    }
+
+    if (guardaDetalle){
+      const reg = { s: codificar("sede", sede), a: periodo.anio, m: periodo.mes, f: kf };
+      for (const d of dims) reg[d.id] = codificar(d.id, valorDimension(fila, d));
+      if (iRut !== -1){
+        const rut = String(fila[iRut] == null ? "" : fila[iRut]).trim();
+        let cr = rutsGlobal.get(rut);
+        if (cr === undefined){ cr = rutsGlobal.size; rutsGlobal.set(rut, cr); }
+        reg.rut = cr;
+      }
+      filasDetalle.push(reg);
+    }
+  }
+
+  if (total.size === 0) throw new Error("Se leyeron " + FMT_ENTERO.format(leidas) + " filas pero ninguna resultó utilizable.");
+  if (sinFecha) anotar("Datos", ind.nombre + ": " + FMT_ENTERO.format(sinFecha) + " filas sin fecha interpretable quedaron fuera.");
+  if (excluidas) anotar("Datos", ind.nombre + ": " + FMT_ENTERO.format(excluidas) + " filas de unidades excluidas por configuración.");
+  anotar("Lectura", ind.nombre + ": " + FMT_ENTERO.format(leidas) + " filas agregadas · sede «" + enc[iSede] + "» · fecha «" + enc[iFecha] + "» · desgloses: " + dims.map(d => d.id).join(", "));
+
+  const listasDim = {};
+  Object.entries(valoresDim).forEach(([id, s]) => { listasDim[id] = [...s].sort((a, b) => a.localeCompare(b, "es")); });
+
+  return {
+    estado: "ok", error: null, total, cubos, actividades, unicos,
+    totalUnicos: codUnico.size,
+    sedes, anios, filasLeidas: leidas, valoresDim: listasDim,
+    detalle: guardaDetalle ? { filas: filasDetalle, dicc: diccInv, ruts: rutsGlobal.size } : null
+  };
+}
+
+/* ---------- Hoja ya agregada: sedes en filas, meses en columnas ---------- */
+function leerMatriz(ind, matriz){
+  const idxEnc = buscarEncabezado(matriz, [ind.col.sede, "sede"]);
+  if (idxEnc === -1) throw new Error("No se encontró la fila de encabezados con la columna de sede.");
+  const enc = matriz[idxEnc].map(c => String(c == null ? "" : c).trim());
+  const iSede = buscarColumna(enc, ind.col.sede, ["sede", "biblioteca", "campus"]);
+
+  const colsMes = [];
+  enc.forEach((h, i) => {
+    if (i === iSede || !h) return;
+    const mes = mesDesdeTexto(h);
+    if (mes) colsMes.push({ i, mes });
+  });
+  if (colsMes.length === 0) throw new Error("No se reconoció ninguna columna de mes en: " + enc.filter(Boolean).join(" | "));
+
+  /* El año sale de una columna suelta de 4 dígitos (el total anual) o de los títulos. */
+  let anio = null;
+  const colAnio = enc.findIndex((h, i) => i !== iSede && /^(19|20)\d{2}$/.test(String(h).trim()));
+  if (colAnio !== -1) anio = +enc[colAnio].trim();
+  if (anio === null){
+    for (let i = 0; i < idxEnc; i++){
+      const m = (matriz[i] || []).join(" ").match(/(19|20)\d{2}/);
+      if (m){ anio = +m[0]; break; }
+    }
+  }
+  if (anio === null){ anio = new Date().getFullYear(); anotar("Formato", ind.nombre + ": no se pudo determinar el año; se asumió " + anio + "."); }
+
+  const total = new Map();
+  const sedes = new Set(), anios = new Set();
+  let excluidas = 0;
+
+  for (let f = idxEnc + 1; f < matriz.length; f++){
+    const fila = matriz[f];
+    if (!fila) continue;
+    const sedeBruta = fila[iSede] == null ? "" : String(fila[iSede]).trim();
+    if (sedeBruta === "" || esFilaTotal(sedeBruta)) continue;
+    const sede = normalizarSede(sedeBruta);
+    if (sede === null){ excluidas++; continue; }
+
+    colsMes.forEach(cm => {
+      const bruto = fila[cm.i];
+      if (String(bruto == null ? "" : bruto).trim() === "") return;  // mes aún no ocurrido
+      const v = parsearNumero(bruto);
+      if (v === null) return;
+      total.set(sede + "|" + anio + "|" + cm.mes, v);
+    });
+    sedes.add(sede); anios.add(anio);
+  }
+
+  if (total.size === 0) throw new Error("No se pudo leer ninguna sede con datos mensuales.");
+  if (excluidas) anotar("Datos", ind.nombre + ": " + excluidas + " filas de unidades excluidas.");
+  anotar("Lectura", ind.nombre + ": matriz de " + colsMes.length + " meses, año " + anio + ", " + total.size + " celdas.");
+
+  return { estado: "ok", error: null, total, cubos: {}, actividades: null, unicos: null,
+           totalUnicos: 0, sedes, anios, filasLeidas: 0, valoresDim: {}, detalle: null };
+}
+
+/** Valor de una dimensión en una fila. Las cruzadas unen dos columnas con SEP_CRUCE. */
+function valorDimension(fila, d){
+  if (d.cruzada){
+    return d.idx.map(i => {
+      const v = fila[i] == null ? "" : String(fila[i]).trim();
+      return v === "" ? CONFIG.etiquetaVacio : v;
+    }).join(SEP_CRUCE);
+  }
+  const v = fila[d.i] == null ? "" : String(fila[d.i]).trim();
+  return v === "" ? CONFIG.etiquetaVacio : v;
+}
+const SEP_CRUCE = "\u241F";
+
+/* ---------- Apoyos de lectura ---------- */
+function buscarEncabezado(matriz, candidatos){
+  const limite = Math.min(matriz.length, 15);
+  for (let i = 0; i < limite; i++){
+    const fila = (matriz[i] || []).map(c => norm(c));
+    const tiene = candidatos.some(c => fila.some(h => h === norm(c) || h.includes(norm(c))));
+    if (tiene && fila.filter(h => h !== "").length >= 2) return i;
+  }
+  return -1;
+}
+function buscarColumna(enc, nombre, alternativas){
+  if (nombre){
+    const exacto = enc.findIndex(h => norm(h) === norm(nombre));
+    if (exacto !== -1) return exacto;
+  }
+  for (const alt of (alternativas || [])){
+    const i = enc.findIndex(h => h && norm(h).includes(norm(alt)));
+    if (i !== -1) return i;
+  }
+  return -1;
+}
+function esFilaTotal(txt){
+  return ["total", "totales", "total general", "suma", "total sistema", "sistema", "resultado"].includes(norm(txt));
+}
+
+/**
+ * Nombre canónico de sede. Devuelve null si la unidad está excluida.
+ * Un nombre no reconocido se conserva tal cual y se anota en la consola.
+ */
+function normalizarSede(bruta){
+  const k = clave(bruta);
+  if (MAPA_SEDES.excluidas.has(k)) return null;
+  const canon = MAPA_SEDES.directo.get(k);
+  if (canon) return canon;
+  anotar("Sede", "«" + bruta + "» no está en la lista configurada; se incluye con ese nombre.");
+  return bruta;
+}
+const MAPA_SEDES = (function(){
+  const directo = new Map(), excluidas = new Set();
+  CONFIG.sedes.canonicas.forEach(s => directo.set(clave(s), s));
+  Object.entries(CONFIG.sedes.alias).forEach(([d, h]) => directo.set(clave(d), h));
+  CONFIG.sedes.excluidas.forEach(s => excluidas.add(clave(s)));
+  return { directo, excluidas };
+})();
+
+/* ==================================================================================
+   CONSOLIDACIÓN Y MES DE REPORTE
+   ================================================================================== */
+function consolidarUniverso(){
+  const sedes = new Set(), anios = new Set();
+  CONFIG.indicadores.forEach(ind => {
+    const d = ESTADO.datos[ind.id];
+    if (!d || d.estado !== "ok") return;
+    d.sedes.forEach(s => sedes.add(s));
+    d.anios.forEach(a => anios.add(a));
+  });
+
+  const canonicas = CONFIG.sedes.canonicas.filter(s => sedes.has(s));
+  const extras = [...sedes].filter(s => !CONFIG.sedes.canonicas.includes(s)).sort((a, b) => a.localeCompare(b, "es"));
+  ESTADO.sedes = canonicas.concat(extras);
+  ESTADO.anios = [...anios].sort((a, b) => a - b);
+  ESTADO.hayComparacion = ESTADO.anios.length > 1;
+
+  const ausentes = CONFIG.sedes.canonicas.filter(s => !sedes.has(s));
+  if (ausentes.length) anotar("Sede", "Sin datos en ninguna hoja: " + ausentes.join(", ") + ".");
+  if (!ESTADO.hayComparacion && ESTADO.anios.length === 1){
+    anotar("Comparación", "Los datos contienen un solo año (" + ESTADO.anios[0] + "); las comparaciones interanuales quedan desactivadas.");
+  }
+  calcularPeriodoReporte();
+}
+
+function ultimoMesCerrado(){
+  const hoy = new Date();
+  const d = new Date(hoy.getFullYear(), hoy.getMonth() - 1, 1);
+  return { anio: d.getFullYear(), mes: d.getMonth() + 1 };
+}
+function hayDatosEn(anio, mes){
+  return CONFIG.indicadores.some(ind => {
+    const d = ESTADO.datos[ind.id];
+    if (!d || d.estado !== "ok") return false;
+    for (const k of d.total.keys()){
+      const p = k.split("|");
+      if (+p[1] === anio && +p[2] === mes) return true;
+    }
+    return false;
+  });
+}
+function calcularPeriodoReporte(){
+  const objetivo = ultimoMesCerrado();
+  ESTADO.periodoSolicitado = objetivo;
+  if (hayDatosEn(objetivo.anio, objetivo.mes)){
+    ESTADO.periodoReporte = objetivo; ESTADO.retrocedio = false;
+  } else {
+    let anio = objetivo.anio, mes = objetivo.mes, encontrado = null;
+    for (let i = 0; i < 36; i++){
+      mes--; if (mes === 0){ mes = 12; anio--; }
+      if (hayDatosEn(anio, mes)){ encontrado = { anio, mes }; break; }
+    }
+    ESTADO.periodoReporte = encontrado || objetivo;
+    ESTADO.retrocedio = !!encontrado;
+  }
+  ESTADO.filtros.mes = ESTADO.periodoReporte.mes;
+  ESTADO.filtros.anio = ESTADO.periodoReporte.anio;
+}
+</script>
+<script>
+"use strict";
+/* ==================================================================================
+   CONSULTAS SOBRE LOS CUBOS
+   Todo el recálculo ocurre en memoria: cambiar de vista o de filtro nunca vuelve a
+   descargar los CSV.
+   ================================================================================== */
+
+function sedesVisibles(){
+  return ESTADO.filtros.sedes.size === 0 ? ESTADO.sedes : ESTADO.sedes.filter(s => ESTADO.filtros.sedes.has(s));
+}
+function sedeVisible(s){
+  return ESTADO.filtros.sedes.size === 0 || ESTADO.filtros.sedes.has(s);
+}
+
+/**
+ * Sedes que aplican a un indicador concreto.
+ * Algunas unidades no corresponden a ciertos indicadores: Campus Virtual y Casa
+ * Central no tienen espacio físico, así que no deben aparecer en Cuenta Personas
+ * ni contarse en sus totales de sedes.
+ */
+function sedesDe(idInd){
+  const ind = CONFIG.indicadores.find(i => i.id === idInd);
+  const fuera = new Set((ind && ind.sedesExcluidas ? ind.sedesExcluidas : []).map(clave));
+  return sedesVisibles().filter(s => !fuera.has(clave(s)));
+}
+function sedeAplica(idInd, s){
+  const ind = CONFIG.indicadores.find(i => i.id === idInd);
+  if (ind && ind.sedesExcluidas && ind.sedesExcluidas.some(x => clave(x) === clave(s))) return false;
+  return sedeVisible(s);
+}
+
+/** Meses del año indicado que tienen datos cargados en al menos un indicador. */
+function mesesConDatos(anio){
+  const set = new Set();
+  CONFIG.indicadores.forEach(ind => {
+    const d = ESTADO.datos[ind.id];
+    if (!d || d.estado !== "ok") return;
+    for (const k of d.total.keys()){
+      const p = k.split("|");
+      if (+p[1] === anio) set.add(+p[2]);
+    }
+  });
+  return [...set].sort((a, b) => a - b);
+}
+
+/** ¿El filtro de mes está en «Todos»? */
+function esAcumulado(){ return ESTADO.filtros.mes === null; }
+
+/**
+ * Meses que abarca la selección actual.
+ * Con un mes puntual devuelve ese; con «Todos», todos los que tengan datos en el
+ * año en curso. Esa misma lista se usa contra el año anterior, para que la
+ * comparación sea del mismo período y no de medio año contra uno completo.
+ */
+function mesesSeleccionados(){
+  if (!esAcumulado()) return [ESTADO.filtros.mes];
+  const m = mesesConDatos(ESTADO.filtros.anio);
+  return m.length ? m : [ESTADO.periodoReporte.mes];
+}
+
+/** Etiqueta legible del período: «Junio 2026» o «Enero – Junio 2026». */
+function etiquetaSeleccion(anio){
+  const a = anio === undefined ? ESTADO.filtros.anio : anio;
+  if (!esAcumulado()) return nombreMes(ESTADO.filtros.mes) + " " + a;
+  const m = mesesSeleccionados();
+  if (m.length === 0) return String(a);
+  if (m.length === 1) return nombreMes(m[0]) + " " + a;
+  return nombreMes(m[0]) + " – " + nombreMes(m[m.length - 1]) + " " + a;
+}
+
+/**
+ * Total de un indicador.
+ * @param {object} o  { anio, meses:[..], sede }   sede omitida = todas las visibles
+ */
+function total(idInd, o){
+  const d = ESTADO.datos[idInd];
+  if (!d || d.estado !== "ok") return null;
+  const meses = o.meses || mesesSeleccionados();
+  const anio = o.anio === undefined ? ESTADO.filtros.anio : o.anio;
+  let acum = null;
+  if (o.sede){
+    for (const mes of meses){
+      const v = d.total.get(o.sede + "|" + anio + "|" + mes);
+      if (v !== undefined) acum = (acum === null ? 0 : acum) + v;
+    }
+    return acum;
+  }
+  for (const s of sedesDe(idInd)){
+    for (const mes of meses){
+      const v = d.total.get(s + "|" + anio + "|" + mes);
+      if (v !== undefined) acum = (acum === null ? 0 : acum) + v;
+    }
+  }
+  return acum;
+}
+
+/** Actividades distintas (Acciones Formativas): une los conjuntos de claves. */
+function totalActividades(idInd, o){
+  const d = ESTADO.datos[idInd];
+  if (!d || d.estado !== "ok" || !d.actividades) return null;
+  const meses = (o && o.meses) || mesesSeleccionados();
+  const anio = (o && o.anio !== undefined) ? o.anio : ESTADO.filtros.anio;
+  const sedes = (o && o.sede) ? [o.sede] : sedesDe(idInd);
+  let n = 0, hubo = false;
+  for (const s of sedes){
+    for (const mes of meses){
+      const set = d.actividades.get(s + "|" + anio + "|" + mes);
+      if (set){ n += set.size; hubo = true; }
+    }
+  }
+  return hubo ? n : null;
+}
+
+/**
+ * Usuarios únicos: unión de los conjuntos de las celdas seleccionadas, nunca suma.
+ * Una misma persona que entra en marzo y en abril es UN usuario, no dos. Sumar los
+ * meses daría 43.015 cuando las personas distintas del año son 28.702.
+ */
+function unicosDe(idInd, o){
+  o = o || {};
+  const d = ESTADO.datos[idInd];
+  if (!d || d.estado !== "ok" || !d.unicos) return null;
+  const meses = o.meses || mesesSeleccionados();
+  const anio = o.anio === undefined ? ESTADO.filtros.anio : o.anio;
+  const sedes = o.sede ? [o.sede] : sedesDe(idInd);
+  const union = new Set();
+  let hubo = false;
+  for (const s of sedes){
+    for (const mes of meses){
+      const set = d.unicos.get(s + "|" + anio + "|" + mes);
+      if (!set) continue;
+      hubo = true;
+      for (const v of set) union.add(v);
+    }
+  }
+  return hubo ? union.size : null;
+}
+
+/** Serie de 12 meses para el año dado, respetando el filtro de sede. */
+function serieMensual(idInd, anio, metrica){
+  const serie = new Array(12).fill(null);
+  const d = ESTADO.datos[idInd];
+  if (!d || d.estado !== "ok") return serie;
+  const usarActividades = metrica === "actividades" && d.actividades;
+  for (const s of sedesDe(idInd)){
+    for (let mes = 1; mes <= 12; mes++){
+      const k = s + "|" + anio + "|" + mes;
+      const v = usarActividades ? (d.actividades.get(k) ? d.actividades.get(k).size : undefined) : d.total.get(k);
+      if (v !== undefined) serie[mes - 1] = (serie[mes - 1] === null ? 0 : serie[mes - 1]) + v;
+    }
+  }
+  return serie;
+}
+
+/**
+ * Desglose por una dimensión.
+ * Devuelve [{ etiqueta, valor }] ordenado de mayor a menor.
+ * @param {object} o  { anio, meses, sede, incluir:[..], excluir:[..] }
+ */
+function desglose(idInd, dim, o){
+  o = o || {};
+  const d = ESTADO.datos[idInd];
+  if (!d || d.estado !== "ok" || !d.cubos[dim]) return [];
+  const meses = new Set(o.meses || mesesSeleccionados());
+  const anio = o.anio === undefined ? ESTADO.filtros.anio : o.anio;
+  const sedes = o.sede ? new Set([o.sede]) : new Set(sedesDe(idInd));
+  const incluir = o.incluir ? new Set(o.incluir.map(norm)) : null;
+  const excluir = o.excluir ? new Set(o.excluir.map(norm)) : null;
+
+  const acum = new Map();
+  for (const [k, v] of d.cubos[dim]){
+    const i1 = k.indexOf("|");
+    const sede = k.slice(0, i1);
+    if (!sedes.has(sede)) continue;
+    const i2 = k.indexOf("|", i1 + 1);
+    if (+k.slice(i1 + 1, i2) !== anio) continue;
+    const i3 = k.indexOf("|", i2 + 1);
+    if (!meses.has(+k.slice(i2 + 1, i3))) continue;
+    const etiqueta = k.slice(i3 + 1);
+    if (incluir && !incluir.has(norm(etiqueta))) continue;
+    if (excluir && excluir.has(norm(etiqueta))) continue;
+    acum.set(etiqueta, (acum.get(etiqueta) || 0) + v);
+  }
+  return [...acum.entries()].map(([etiqueta, valor]) => ({ etiqueta, valor }))
+                            .sort((a, b) => b.valor - a.valor);
+}
+
+/** Desglose por sede de un valor concreto de una dimensión (ej. autopréstamo por sede). */
+function desglosePorSede(idInd, dim, valorDim, o){
+  o = o || {};
+  const d = ESTADO.datos[idInd];
+  if (!d || d.estado !== "ok" || !d.cubos[dim]) return new Map();
+  const meses = new Set(o.meses || mesesSeleccionados());
+  const anio = o.anio === undefined ? ESTADO.filtros.anio : o.anio;
+  const objetivo = norm(valorDim);
+  const res = new Map();
+  for (const [k, v] of d.cubos[dim]){
+    const i1 = k.indexOf("|");
+    const sede = k.slice(0, i1);
+    if (!sedeAplica(idInd, sede)) continue;
+    const i2 = k.indexOf("|", i1 + 1);
+    if (+k.slice(i1 + 1, i2) !== anio) continue;
+    const i3 = k.indexOf("|", i2 + 1);
+    if (!meses.has(+k.slice(i2 + 1, i3))) continue;
+    if (norm(k.slice(i3 + 1)) !== objetivo) continue;
+    res.set(sede, (res.get(sede) || 0) + v);
+  }
+  return res;
+}
+
+/**
+ * Desglose del segundo componente de una dimensión cruzada, fijando el primero.
+ * Ej.: desgloseCruzado("material_fisico","tipoEstacion","PRESTAMO") devuelve cómo se
+ * repartieron los préstamos entre mesón y autopréstamo.
+ */
+function desgloseCruzado(idInd, dim, valorA, o){
+  o = o || {};
+  const d = ESTADO.datos[idInd];
+  if (!d || d.estado !== "ok" || !d.cubos[dim]) return [];
+  const meses = new Set(o.meses || mesesSeleccionados());
+  const anio = o.anio === undefined ? ESTADO.filtros.anio : o.anio;
+  const sedes = o.sede ? new Set([o.sede]) : new Set(sedesDe(idInd));
+  const objetivo = norm(valorA);
+  const incluirB = o.incluirB ? new Set(o.incluirB.map(norm)) : null;
+
+  const acum = new Map();
+  for (const [k, v] of d.cubos[dim]){
+    const i1 = k.indexOf("|");
+    if (!sedes.has(k.slice(0, i1))) continue;
+    const i2 = k.indexOf("|", i1 + 1);
+    if (+k.slice(i1 + 1, i2) !== anio) continue;
+    const i3 = k.indexOf("|", i2 + 1);
+    if (!meses.has(+k.slice(i2 + 1, i3))) continue;
+    const par = k.slice(i3 + 1).split(SEP_CRUCE);
+    if (norm(par[0]) !== objetivo) continue;
+    const b = par[1] === undefined ? CONFIG.etiquetaVacio : par[1];
+    if (incluirB && !incluirB.has(norm(b))) continue;
+    acum.set(b, (acum.get(b) || 0) + v);
+  }
+  return [...acum.entries()].map(([etiqueta, valor]) => ({ etiqueta, valor })).sort((a, b) => b.valor - a.valor);
+}
+
+/** Igual que el anterior, pero repartido por sede para un par (A, B) concreto. */
+function cruzadoPorSede(idInd, dim, valorA, valorB, o){
+  o = o || {};
+  const d = ESTADO.datos[idInd];
+  if (!d || d.estado !== "ok" || !d.cubos[dim]) return new Map();
+  const meses = new Set(o.meses || mesesSeleccionados());
+  const anio = o.anio === undefined ? ESTADO.filtros.anio : o.anio;
+  const oa = norm(valorA), ob = valorB === undefined ? null : norm(valorB);
+  const res = new Map();
+  for (const [k, v] of d.cubos[dim]){
+    const i1 = k.indexOf("|");
+    const sede = k.slice(0, i1);
+    if (!sedeAplica(idInd, sede)) continue;
+    const i2 = k.indexOf("|", i1 + 1);
+    if (+k.slice(i1 + 1, i2) !== anio) continue;
+    const i3 = k.indexOf("|", i2 + 1);
+    if (!meses.has(+k.slice(i2 + 1, i3))) continue;
+    const par = k.slice(i3 + 1).split(SEP_CRUCE);
+    if (norm(par[0]) !== oa) continue;
+    if (ob !== null && norm(par[1] || "") !== ob) continue;
+    res.set(sede, (res.get(sede) || 0) + v);
+  }
+  return res;
+}
+
+/** Serie mensual de un par cruzado (o de todo un valor de A si B se omite). */
+function serieCruzada(idInd, dim, valorA, valorB, anio){
+  const s = new Array(12).fill(null);
+  for (let m = 1; m <= 12; m++){
+    const porSede = cruzadoPorSede(idInd, dim, valorA, valorB, { anio, meses: [m] });
+    let t = null;
+    porSede.forEach(v => { t = (t === null ? 0 : t) + v; });
+    s[m - 1] = t;
+  }
+  return s;
+}
+
+/** Recorta a los N mayores y agrupa el resto bajo una etiqueta. */
+function recortarTop(lista, n, etiquetaResto){
+  if (lista.length <= n) return lista;
+  const top = lista.slice(0, n);
+  const resto = lista.slice(n).reduce((t, x) => t + x.valor, 0);
+  if (resto > 0) top.push({ etiqueta: etiquetaResto, valor: resto, esResto: true });
+  return top;
+}
+
+/** Agrupa los valores que representan «sin carrera» bajo una sola etiqueta. */
+function agruparCarreras(lista){
+  const sin = new Set(CONFIG.criterios.sinCarrera.map(norm));
+  sin.add(norm(CONFIG.etiquetaVacio));
+  let acumSin = 0;
+  const salida = [];
+  lista.forEach(x => {
+    if (sin.has(norm(x.etiqueta))) acumSin += x.valor;
+    else salida.push(x);
+  });
+  salida.sort((a, b) => b.valor - a.valor);
+  if (acumSin > 0) salida.push({ etiqueta: CONFIG.criterios.etiquetaSinCarrera, valor: acumSin, esNoAplica: true });
+  return salida;
+}
+
+/* ==================================================================================
+   ACCIONES FORMATIVAS: consultas sobre el detalle compacto
+   Esa vista necesita filtros propios y contar RUT únicos, así que se conservan las
+   26.917 filas codificadas como enteros (unos pocos MB).
+   ================================================================================== */
+
+/** Filas que pasan los filtros globales y los propios de la vista. */
+function filasAF(o){
+  o = o || {};
+  const d = ESTADO.datos.acciones_formativas;
+  if (!d || d.estado !== "ok" || !d.detalle) return [];
+  const det = d.detalle;
+  const anio = o.anio === undefined ? ESTADO.filtros.anio : o.anio;
+  const meses = new Set(o.meses || mesesSeleccionados());
+  const sedesOk = ESTADO.filtros.sedes.size === 0 ? null : new Set(sedesVisibles());
+  const f = ESTADO.filtrosAF;
+
+  /* Los filtros locales se traducen a códigos una sola vez. */
+  const cod = (campo, texto) => {
+    if (!texto) return -1;
+    const i = det.dicc[campo].indexOf(texto);
+    return i === -1 ? -2 : i;   // -2 = valor inexistente, no calza con nada
+  };
+  const cAct = cod("actividad", f.actividad);
+  const cAcc = cod("accion", f.accion);
+  const cCar = cod("carrera", f.carrera);
+  const cIa  = cod("ia", f.ia);
+
+  const salida = [];
+  for (const r of det.filas){
+    if (r.a !== anio || !meses.has(r.m)) continue;
+    if (sedesOk && !sedesOk.has(det.dicc.sede[r.s])) continue;
+    if (cAct !== -1 && r.actividad !== cAct) continue;
+    if (cAcc !== -1 && r.accion !== cAcc) continue;
+    if (cCar !== -1 && r.carrera !== cCar) continue;
+    if (cIa  !== -1 && r.ia !== cIa) continue;
+    salida.push(r);
+  }
+  return salida;
+}
+
+/** ¿Hay algún filtro propio de Acciones Formativas activo? */
+function hayFiltrosAF(){
+  const f = ESTADO.filtrosAF;
+  return !!(f.actividad || f.accion || f.carrera || f.ia);
+}
+
+/** Métricas de la vista Acciones Formativas para un conjunto de filas. */
+function metricasAF(filas){
+  const d = ESTADO.datos.acciones_formativas;
+  const det = d && d.detalle;
+  if (!det) return { participaciones: 0, unicos: 0, actividades: 0, sedes: 0, ia: 0 };
+  const ruts = new Set(), acts = new Set(), sedes = new Set();
+  let ia = 0;
+  const codIaSi = det.dicc.ia.findIndex(v => /^s[ií]$/i.test(String(v).trim()));
+  for (const r of filas){
+    ruts.add(r.rut);
+    acts.add(r.s + "|" + r.f + "|" + r.accion);
+    sedes.add(r.s);
+    if (r.ia === codIaSi) ia++;
+  }
+  return { participaciones: filas.length, unicos: ruts.size, actividades: acts.size, sedes: sedes.size, ia };
+}
+
+/** Conteo por una dimensión sobre filas ya filtradas. */
+function contarAF(filas, campo){
+  const det = ESTADO.datos.acciones_formativas.detalle;
+  const acum = new Map();
+  for (const r of filas){
+    const et = det.dicc[campo][r[campo]];
+    acum.set(et, (acum.get(et) || 0) + 1);
+  }
+  return [...acum.entries()].map(([etiqueta, valor]) => ({ etiqueta, valor })).sort((a, b) => b.valor - a.valor);
+}
+
+/** Conteo por sede sobre filas ya filtradas. */
+function contarAFPorSede(filas){
+  const det = ESTADO.datos.acciones_formativas.detalle;
+  const acum = new Map();
+  for (const r of filas) {
+    const s = det.dicc.sede[r.s];
+    acum.set(s, (acum.get(s) || 0) + 1);
+  }
+  return acum;
+}
+
+/** Serie mensual de participaciones con los filtros locales aplicados. */
+function serieAF(anio){
+  const serie = new Array(12).fill(null);
+  const todos = filasAF({ anio, meses: [1,2,3,4,5,6,7,8,9,10,11,12] });
+  for (const r of todos) serie[r.m - 1] = (serie[r.m - 1] === null ? 0 : serie[r.m - 1]) + 1;
+  return serie;
+}
+
+/** Actividades agregadas para la tabla de detalle. */
+function actividadesAF(filas){
+  const det = ESTADO.datos.acciones_formativas.detalle;
+  const mapa = new Map();
+  for (const r of filas){
+    const k = r.s + "|" + r.f + "|" + r.accion;
+    let a = mapa.get(k);
+    if (!a){
+      a = { sede: det.dicc.sede[r.s], fecha: r.f, mes: r.m,
+            accion: det.dicc.accion[r.accion], tipo: det.dicc.actividad[r.actividad],
+            ia: det.dicc.ia[r.ia], asistentes: 0 };
+      mapa.set(k, a);
+    }
+    a.asistentes++;
+  }
+  return [...mapa.values()];
+}
+
+/* ==================================================================================
+   FILTROS DE LA INTERFAZ
+   ================================================================================== */
+function construirFiltros(){
+  const lista = document.getElementById("lista-sedes");
+  lista.innerHTML = ESTADO.sedes.map(s =>
+    '<label><input type="checkbox" value="' + escapar(s) + '"><span>' + escapar(s) + "</span></label>"
+  ).join("") || '<div class="vacio" style="padding:16px">Sin sedes</div>';
+
+  lista.addEventListener("change", e => {
+    if (e.target.type !== "checkbox") return;
+    if (e.target.checked) ESTADO.filtros.sedes.add(e.target.value);
+    else ESTADO.filtros.sedes.delete(e.target.value);
+    if (ESTADO.filtros.sedes.size === ESTADO.sedes.length) ESTADO.filtros.sedes.clear();
+    actualizarEtiquetaSedes();
+    renderizar();
+  });
+
+  document.querySelectorAll("#panel-sedes .acciones button").forEach(b => {
+    b.addEventListener("click", () => {
+      ESTADO.filtros.sedes.clear();
+      lista.querySelectorAll("input").forEach(i => { i.checked = false; });
+      actualizarEtiquetaSedes();
+      renderizar();
+    });
+  });
+
+  const btnSedes = document.getElementById("btn-sedes");
+  btnSedes.addEventListener("click", e => {
+    e.stopPropagation();
+    const p = document.getElementById("panel-sedes");
+    btnSedes.setAttribute("aria-expanded", String(p.classList.toggle("abierto")));
+  });
+  document.getElementById("panel-sedes").addEventListener("click", e => e.stopPropagation());
+
+  /* Mes: «Todos» además de los doce meses. */
+  const selMes = document.getElementById("sel-mes");
+  selMes.innerHTML = '<option value="todos">Todos (acumulado del año)</option>' +
+    CONFIG.meses.map((m, i) =>
+      '<option value="' + (i + 1) + '"' + (i + 1 === ESTADO.filtros.mes ? " selected" : "") + ">" + m + "</option>"
+    ).join("");
+  selMes.addEventListener("change", () => {
+    ESTADO.filtros.mes = selMes.value === "todos" ? null : +selMes.value;
+    renderizar();
+  });
+
+  const selAnio = document.getElementById("sel-anio");
+  selAnio.innerHTML = ESTADO.anios.slice().reverse().map(a =>
+    '<option value="' + a + '"' + (a === ESTADO.filtros.anio ? " selected" : "") + ">" + a + "</option>"
+  ).join("") || '<option value="">—</option>';
+  selAnio.addEventListener("change", () => { ESTADO.filtros.anio = +selAnio.value; renderizar(); });
+
+  actualizarEtiquetaSedes();
+  document.addEventListener("click", () => {
+    document.getElementById("panel-sedes").classList.remove("abierto");
+    document.getElementById("btn-sedes").setAttribute("aria-expanded", "false");
+  });
+}
+
+function actualizarEtiquetaSedes(){
+  const n = ESTADO.filtros.sedes.size;
+  document.getElementById("etq-sedes").textContent = n === 0
+    ? "Todas (" + ESTADO.sedes.length + ")"
+    : (n === 1 ? [...ESTADO.filtros.sedes][0] : n + " sedes seleccionadas");
+}
+
+function renderizarChips(){
+  const n = ESTADO.filtros.sedes.size;
+  const chips = [];
+  chips.push('<span class="chip' + (n > 0 ? " acento" : "") + '">Sedes: <b>' +
+    (n === 0 ? "todas (" + ESTADO.sedes.length + ")" : n + " de " + ESTADO.sedes.length) + "</b></span>");
+
+  if (esAcumulado()){
+    chips.push('<span class="chip acento">Período: <b>' + etiquetaSeleccion() + "</b> · acumulado</span>");
+  } else {
+    const esReporte = ESTADO.filtros.mes === ESTADO.periodoReporte.mes && ESTADO.filtros.anio === ESTADO.periodoReporte.anio;
+    chips.push('<span class="chip' + (esReporte ? "" : " acento") + '">Período: <b>' + etiquetaSeleccion() + "</b>" +
+      (esReporte ? "" : " · distinto al mes de reporte") + "</span>");
+  }
+
+  if (ESTADO.vistaActiva === "acciones_formativas" && hayFiltrosAF()){
+    const f = ESTADO.filtrosAF;
+    const act = [f.actividad, f.accion, f.carrera, f.ia && ("IA: " + f.ia)].filter(Boolean);
+    chips.push('<span class="chip acento">Filtros de la vista: <b>' + escapar(act.join(" · ")) + "</b></span>");
+  }
+  document.getElementById("chips-filtros").innerHTML = chips.join("");
+}
+
+/** Texto plano de los filtros activos, para el encabezado del PDF. */
+function textoFiltros(){
+  const n = ESTADO.filtros.sedes.size;
+  const sedes = n === 0
+    ? "Todas las sedes (" + ESTADO.sedes.length + ")"
+    : n + " de " + ESTADO.sedes.length + " sedes (" + [...ESTADO.filtros.sedes].sort((a, b) => a.localeCompare(b, "es")).join(", ") + ")";
+  const partes = ["Sede: " + sedes, "Período: " + etiquetaSeleccion() + (esAcumulado() ? " (acumulado)" : "")];
+  if (ESTADO.vistaActiva === "acciones_formativas" && hayFiltrosAF()){
+    const f = ESTADO.filtrosAF;
+    if (f.actividad) partes.push("Tipo de actividad: " + f.actividad);
+    if (f.accion) partes.push("Actividad: " + f.accion);
+    if (f.carrera) partes.push("Carrera: " + f.carrera);
+    if (f.ia) partes.push("Taller de IA: " + f.ia);
+  }
+  return partes.join(" · ");
+}
+</script>
+<script>
+"use strict";
+/* ==================================================================================
+   ESTRUCTURA DE VISTAS
+   ================================================================================== */
+function vistas(){
+  return [{ id: "resumen", etiqueta: "Resumen", indicador: null }]
+    .concat(CONFIG.indicadores.map(i => ({ id: i.id, etiqueta: i.nombreCorto, indicador: i })));
+}
+function indicadorDe(id){ return CONFIG.indicadores.find(i => i.id === id); }
+
+function construirMenu(){
+  const nav = document.getElementById("menu");
+  nav.innerHTML = "";
+  vistas().forEach(v => {
+    const b = document.createElement("button");
+    b.type = "button"; b.textContent = v.etiqueta; b.dataset.vista = v.id;
+    b.className = v.id === ESTADO.vistaActiva ? "activo" : "";
+    b.addEventListener("click", () => cambiarVista(v.id));
+    nav.appendChild(b);
+  });
+}
+function construirContenedores(){
+  document.getElementById("contenido").innerHTML = vistas().map(v =>
+    '<section class="vista' + (v.id === ESTADO.vistaActiva ? " activa" : "") + '" id="vista-' + v.id + '"></section>'
+  ).join("");
+}
+function cambiarVista(id){
+  ESTADO.vistaActiva = id;
+  document.querySelectorAll("#menu button").forEach(b => b.classList.toggle("activo", b.dataset.vista === id));
+  document.querySelectorAll(".vista").forEach(s => s.classList.toggle("activa", s.id === "vista-" + id));
+  renderizar();
+  window.scrollTo({ top: 0 });
+}
+
+function renderizar(){
+  renderizarChips();
+  actualizarEncabezado();
+  const v = ESTADO.vistaActiva;
+  if (v === "resumen") renderResumen();
+  else if (v === "material_fisico") renderMaterialFisico();
+  else if (v === "transacciones_digitales") renderTDigital();
+  else if (v === "cuenta_personas") renderCuentaPersonas();
+  else if (v === "acciones_formativas") renderAccionesFormativas();
+}
+
+function actualizarEncabezado(){
+  document.getElementById("meta-periodo").textContent = "Reporte: " + etiquetaPeriodo(ESTADO.periodoReporte);
+  const f = ESTADO.cargadoEn;
+  document.getElementById("meta-actualizacion").textContent = f
+    ? "Datos descargados: " + f.toLocaleDateString("es-CL") + " " + f.toLocaleTimeString("es-CL", { hour: "2-digit", minute: "2-digit" })
+    : "—";
+  document.getElementById("meta-version").textContent = CONFIG.version;
+}
+
+/* ---------- Piezas comunes ---------- */
+function cabeceraVista(titulo){
+  return '<div class="encabezado-vista"><h1><span class="sub">' + escapar(CONFIG.subtitulo) + "</span>" +
+    escapar(titulo) + '<span class="periodo' + (esAcumulado() ? " acumulado" : "") + '">' +
+    escapar(etiquetaSeleccion()) + "</span></h1></div>" + htmlAviso();
+}
+function htmlAviso(){
+  if (!ESTADO.retrocedio) return '<div class="aviso"></div>';
+  return '<div class="aviso visible"><span>&#9888;</span><div><strong>Datos de ' +
+    etiquetaPeriodo(ESTADO.periodoSolicitado) + ' aún no disponibles</strong> — mostrando ' +
+    etiquetaPeriodo(ESTADO.periodoReporte) + ", el último mes con información cargada.</div></div>";
+}
+function seccion(titulo, cuerpo, pista, controles){
+  return '<section class="seccion"><header><h2>' + escapar(titulo) + "</h2>" +
+    (pista ? '<span class="pista">' + escapar(pista) + "</span>" : "") +
+    (controles ? '<div class="espaciador"></div>' + controles : "") +
+    '</header><div class="cuerpo-seccion">' + cuerpo + "</div></section>";
+}
+function bloqueError(ind){
+  const d = ESTADO.datos[ind.id];
+  return '<div class="bloque-error"><strong>No se pudieron cargar los datos de ' + escapar(ind.nombre) + "</strong>" +
+    escapar(d ? d.error : "Error desconocido") +
+    '<br><br>Hoja de origen: <code>' + escapar(urlHoja(ind.gid)) + "</code>" +
+    "<br>El resto del dashboard sigue funcionando con las hojas que sí cargaron.</div>";
+}
+
+/** Tarjeta KPI con comparación interanual condicional. */
+function tarjeta(titulo, valor, unidad, opciones){
+  opciones = opciones || {};
+  let pie;
+  if (opciones.pie !== undefined) pie = opciones.pie;
+  else if (opciones.anterior !== undefined && opciones.anterior !== null){
+    pie = htmlVariacion(variacion(valor, opciones.anterior)) +
+      "<span>vs. " + escapar(opciones.etiquetaAnterior || "período anterior") + ": " + fmtTxt(opciones.anterior) + "</span>";
+  } else {
+    pie = '<span style="color:var(--texto-muy-tenue)">Sin año anterior para comparar</span>';
+  }
+  return '<div class="kpi"><div class="titulo">' + escapar(titulo) + "</div>" +
+    '<div class="valor">' + fmt(valor) + (unidad ? '<span class="unidad">' + escapar(unidad) + "</span>" : "") + "</div>" +
+    (opciones.secundario ? '<div class="secundario">' + opciones.secundario + "</div>" : "") +
+    '<div class="pie">' + pie + "</div></div>";
+}
+
+/** Año de referencia y de comparación. */
+function anios(){
+  const ref = ESTADO.filtros.anio, prev = ref - 1;
+  return { ref, prev, hayPrev: ESTADO.anios.includes(prev) };
+}
+
+/* ==================================================================================
+   VISTA RESUMEN
+   ================================================================================== */
+function renderResumen(){
+  const { ref, prev, hayPrev } = anios();
+  const meses = mesesSeleccionados();
+
+  const kpis = CONFIG.indicadores.map(ind => {
+    const d = ESTADO.datos[ind.id];
+    if (!d || d.estado !== "ok"){
+      return '<div class="kpi error"><div class="titulo">' + escapar(ind.nombre) + "</div>" +
+        '<div class="msj-error">No se pudo cargar esta hoja.</div>' +
+        '<div class="pie">Revisa el detalle en la vista del indicador.</div></div>';
+    }
+    const actual = total(ind.id, { anio: ref, meses });
+    const anterior = hayPrev ? total(ind.id, { anio: prev, meses }) : null;
+    let secundario = "";
+    if (ind.id === "acciones_formativas"){
+      secundario = "Actividades: <b>" + fmtTxt(totalActividades(ind.id, { anio: ref, meses })) + "</b>";
+    }
+    return tarjeta(ind.nombre, actual, ind.unidad, {
+      anterior: hayPrev ? anterior : undefined,
+      etiquetaAnterior: etiquetaSeleccion(prev),
+      secundario
+    });
+  }).join("");
+
+  /* Cuatro evoluciones independientes, una por tópico, sin selector. */
+  const evoluciones = CONFIG.indicadores.map(ind =>
+    '<div class="mini"><h3>' + escapar(ind.nombreCorto) + "</h3><div class=\"cuerpo\">" +
+    (ESTADO.datos[ind.id] && ESTADO.datos[ind.id].estado === "ok"
+      ? '<div class="caja-grafico"><canvas id="g-evo-' + ind.id + '"></canvas></div>'
+      : '<div class="vacio">Sin datos disponibles</div>') +
+    "</div></div>").join("");
+
+  document.getElementById("vista-resumen").innerHTML =
+    cabeceraVista("Resumen de indicadores") +
+    '<div class="grilla-kpi">' + kpis + "</div>" +
+    seccion("Evolución mensual por indicador",
+      '<div class="grilla-evolucion">' + evoluciones + "</div>",
+      hayPrev ? "Año actual vs. año anterior" : "Año " + ref) +
+    seccion("Comparativo por perfil de usuario",
+      '<div class="grilla-2">' +
+        '<div><div class="caja-grafico"><canvas id="g-perfil-comp"></canvas></div></div>' +
+        '<div><div class="envoltorio-tabla limitada" id="cont-perfil-comp"></div></div>' +
+      "</div>" +
+      '<p class="nota">Cada barra es el porcentaje que representa ese perfil <strong>dentro de su propio indicador</strong>, ' +
+      "no entre indicadores: así se pueden comparar servicios de volúmenes muy distintos. Los valores absolutos están en la tabla. " +
+      "M. Físico considera solo los préstamos, que son las transacciones con perfil de usuario asociado. " +
+      "Cuenta Personas no aparece porque los arcos de conteo no identifican al usuario.</p>") +
+
+    seccion("Comparativa por sede · " + etiquetaSeleccion(),
+      '<div class="envoltorio-tabla" id="cont-tabla-resumen"></div>' +
+      '<p class="nota">Se muestra la métrica principal de cada indicador. Haz clic en los encabezados para ordenar.</p>');
+
+  CONFIG.indicadores.forEach(ind => {
+    if (ESTADO.datos[ind.id] && ESTADO.datos[ind.id].estado === "ok"){
+      dibujarEvolucion("g-evo-" + ind.id, ind.id, ind.id === "acciones_formativas" ? "asistentes" : "valor");
+    }
+  });
+  renderComparativoPerfil();
+  renderTablaResumen();
+}
+
+/* ---------------------------------------------------------------------------------
+   Comparativo por perfil entre indicadores.
+   Las tres hojas con perfil usan la misma taxonomía (Alumno Diurno, Vespertino,
+   Campus Virtual, Docente, Administrativos, Ex Alumno), así que son comparables.
+   Se expresa en porcentaje dentro de cada indicador porque los volúmenes absolutos
+   son muy distintos (81.655 préstamos vs. 149.699 accesos vs. 26.917 participaciones).
+   --------------------------------------------------------------------------------- */
+function renderComparativoPerfil(){
+  const { ref } = anios();
+  const meses = mesesSeleccionados();
+
+  const fuentes = [
+    { id: "material_fisico", nombre: "M. Físico (préstamos)",
+      lista: () => agruparPerfilesOperativos(
+        desgloseCruzado("material_fisico", "tipoPerfil", CONFIG.criterios.tipoPrestamoPuro, { anio: ref, meses })) },
+    { id: "transacciones_digitales", nombre: "T. Digital",
+      lista: () => desglose("transacciones_digitales", "perfil", { anio: ref, meses }) },
+    { id: "acciones_formativas", nombre: "Acciones Formativas",
+      lista: () => desglose("acciones_formativas", "tipoUsuario", { anio: ref, meses }) }
+  ].filter(f => ESTADO.datos[f.id] && ESTADO.datos[f.id].estado === "ok");
+
+  const series = fuentes.map(f => {
+    const lista = f.lista();
+    const suma = lista.reduce((t, x) => t + x.valor, 0);
+    const abs = {}, prc = {};
+    lista.forEach(x => { abs[x.etiqueta] = x.valor; prc[x.etiqueta] = suma ? (x.valor / suma) * 100 : 0; });
+    return { nombre: f.nombre, abs, pct: prc, suma };
+  });
+
+  /* Perfiles ordenados por peso promedio entre indicadores; el resto se agrupa. */
+  const todos = new Map();
+  series.forEach(s => Object.entries(s.pct).forEach(([e, v]) => todos.set(e, (todos.get(e) || 0) + v)));
+  let etiquetas = [...todos.entries()].sort((a, b) => b[1] - a[1]).map(x => x[0]);
+
+  const LIMITE = 8;
+  if (etiquetas.length > LIMITE){
+    const visibles = etiquetas.slice(0, LIMITE);
+    const resto = etiquetas.slice(LIMITE);
+    series.forEach(s => {
+      let a = 0, p = 0;
+      resto.forEach(e => { a += s.abs[e] || 0; p += s.pct[e] || 0; });
+      if (a > 0){ s.abs["Otros perfiles"] = a; s.pct["Otros perfiles"] = p; }
+    });
+    etiquetas = visibles.concat(series.some(s => s.abs["Otros perfiles"]) ? ["Otros perfiles"] : []);
+  }
+
+  dibujarComparativoPerfil("g-perfil-comp", series, etiquetas);
+  tablaComparativoPerfil("cont-perfil-comp", series, etiquetas);
+}
+
+function tablaComparativoPerfil(id, series, etiquetas){
+  const cont = document.getElementById(id);
+  if (!cont) return;
+  if (!etiquetas.length){ cont.innerHTML = '<div class="vacio">Sin datos.</div>'; return; }
+  let html = '<table class="datos compacta"><thead><tr><th class="izq">Perfil</th>' +
+    series.map(s => '<th class="sep-izq">' + escapar(s.nombre) + "</th><th>%</th>").join("") +
+    "</tr></thead><tbody>";
+  etiquetas.forEach(e => {
+    html += '<tr><td class="izq normal">' + escapar(e) + "</td>";
+    series.forEach(s => {
+      const a = s.abs[e];
+      html += '<td class="sep-izq">' + (a === undefined ? '<span class="sin-dato">—</span>' : fmt(a)) + "</td>" +
+        "<td>" + (a === undefined ? "—" : FMT_DECIMAL.format(s.pct[e]) + "%") + "</td>";
+    });
+    html += "</tr>";
+  });
+  html += "</tbody><tfoot><tr><td class='izq'>Total</td>" +
+    series.map(s => '<td class="sep-izq">' + fmt(s.suma) + "</td><td>100,0%</td>").join("") +
+    "</tr></tfoot></table>";
+  cont.innerHTML = html;
+}
+
+function renderTablaResumen(){
+  const cont = document.getElementById("cont-tabla-resumen");
+  const { ref, prev, hayPrev } = anios();
+  const meses = mesesSeleccionados();
+  const sedes = sedesVisibles();
+  if (sedes.length === 0){ cont.innerHTML = '<div class="vacio">No hay sedes seleccionadas.</div>'; return; }
+
+  const filas = sedes.map(sede => ({
+    sede,
+    celdas: CONFIG.indicadores.map(ind => {
+      const a = total(ind.id, { anio: ref, meses, sede });
+      const b = hayPrev ? total(ind.id, { anio: prev, meses, sede }) : null;
+      return { actual: a, anterior: b, variacion: hayPrev ? variacion(a, b) : null };
+    })
+  }));
+
+  ordenarResumen(filas, hayPrev);
+
+  let html = '<table class="datos"><thead><tr>' + th("Sede", 0, "resumen", "izq");
+  let ci = 1;
+  CONFIG.indicadores.forEach(ind => {
+    html += th(ind.nombreCorto, ci++, "resumen", "sep-izq");
+    if (hayPrev) html += th("Var. %", ci++, "resumen", "");
+  });
+  html += "</tr></thead><tbody>";
+  filas.forEach(f => {
+    html += '<tr><td class="izq">' + escapar(f.sede) + "</td>";
+    f.celdas.forEach(c => {
+      html += '<td class="sep-izq">' + fmt(c.actual) + "</td>";
+      if (hayPrev) html += "<td>" + htmlVariacion(c.variacion, false) + "</td>";
+    });
+    html += "</tr>";
+  });
+  html += "</tbody><tfoot><tr><td class='izq'>Total sistema</td>";
+  CONFIG.indicadores.forEach((ind, i) => {
+    const tA = sumaCol(filas, i, "actual"), tB = hayPrev ? sumaCol(filas, i, "anterior") : null;
+    html += '<td class="sep-izq">' + fmt(tA) + "</td>";
+    if (hayPrev) html += "<td>" + htmlVariacion(variacion(tA, tB), false) + "</td>";
+  });
+  html += "</tr></tfoot></table>";
+  cont.innerHTML = html;
+  activarOrden(cont, "resumen", renderTablaResumen);
+}
+function sumaCol(filas, i, campo){
+  let t = null;
+  filas.forEach(f => { const v = f.celdas[i][campo]; if (v !== null && v !== undefined) t = (t === null ? 0 : t) + v; });
+  return t;
+}
+function ordenarResumen(filas, hayPrev){
+  const o = ESTADO.orden.resumen;
+  if (!o) return;
+  if (o.col === 0){ filas.sort((x, y) => x.sede.localeCompare(y.sede, "es") * o.dir); return; }
+  const porInd = hayPrev ? 2 : 1;
+  const idx = Math.floor((o.col - 1) / porInd);
+  const esVar = hayPrev && ((o.col - 1) % porInd === 1);
+  filas.sort((x, y) => comparar(esVar ? x.celdas[idx].variacion : x.celdas[idx].actual,
+                                esVar ? y.celdas[idx].variacion : y.celdas[idx].actual, o.dir));
+}
+
+/* ==================================================================================
+   VISTA M. FÍSICO
+   ================================================================================== */
+function renderMaterialFisico(){
+  const ind = indicadorDe("material_fisico");
+  const cont = document.getElementById("vista-material_fisico");
+  const d = ESTADO.datos[ind.id];
+  if (!d || d.estado !== "ok"){ cont.innerHTML = cabeceraVista(ind.nombre) + bloqueError(ind); return; }
+
+  const { ref, prev, hayPrev } = anios();
+  const meses = mesesSeleccionados();
+  const C = CONFIG.criterios;
+
+  const totalPeriodo = total(ind.id, { anio: ref, meses });
+  const totalPrev = hayPrev ? total(ind.id, { anio: prev, meses }) : null;
+  const porTipo = desglose(ind.id, "tipo", { anio: ref, meses });
+  const valTipo = t => (porTipo.find(x => norm(x.etiqueta) === norm(t)) || {}).valor || 0;
+  const prestamos = valTipo(C.tipoPrestamoPuro);
+  const renovaciones = valTipo(C.tipoRenovacion);
+
+  const prestamosPrev = hayPrev
+    ? (desglose(ind.id, "tipo", { anio: prev, meses }).find(x => norm(x.etiqueta) === norm(C.tipoPrestamoPuro)) || {}).valor || null
+    : null;
+
+  const kpis =
+    tarjeta("Préstamos", prestamos, "", {
+      anterior: hayPrev ? prestamosPrev : undefined, etiquetaAnterior: etiquetaSeleccion(prev) }) +
+    tarjeta("Renovaciones", renovaciones, "", {
+      pie: "<span>" + pct(renovaciones, prestamos) + " respecto de los préstamos</span>" }) +
+    tarjeta("Transacciones totales", totalPeriodo, "", {
+      anterior: hayPrev ? totalPrev : undefined, etiquetaAnterior: etiquetaSeleccion(prev),
+      secundario: "Incluye uso en sala, exposición e intersede" }) +
+    tarjeta("Sedes con actividad",
+      sedesDe(ind.id).filter(s => total(ind.id, { anio: ref, meses, sede: s })).length,
+      "de " + sedesDe(ind.id).length, { pie: "<span>en el período seleccionado</span>" });
+
+  cont.innerHTML = cabeceraVista(ind.nombre) +
+    '<div class="grilla-kpi">' + kpis + "</div>" +
+
+    seccion("Evolución total préstamos físicos",
+      '<div class="caja-grafico"><canvas id="g-mf-evo"></canvas></div>',
+      "Solo transacciones de tipo PRÉSTAMO" + (hayPrev ? " · año actual vs. año anterior" : "")) +
+
+    seccion("Comparativo por sede",
+      '<div class="caja-grafico alta"><canvas id="g-mf-sede"></canvas></div>',
+      "Total de transacciones") +
+
+    seccion("Préstamos por carrera",
+      '<div class="caja-grafico alta"><canvas id="g-mf-carrera"></canvas></div>',
+      "Solo tipo PRÉSTAMO · top " + C.topCarreras + ", el resto agrupado") +
+
+    seccion("Préstamos por tipo de material",
+      '<div class="grilla-2">' +
+        '<div><div class="caja-grafico alta"><canvas id="g-mf-item"></canvas></div></div>' +
+        '<div><div class="envoltorio-tabla limitada" id="cont-mf-item"></div></div>' +
+      "</div>" +
+      '<p class="nota">Considera solo las transacciones de tipo PRÉSTAMO, es decir, el material que ' +
+      "efectivamente sale de la biblioteca. Medido sobre todas las transacciones el orden cambia mucho, " +
+      "porque los libros concentran el uso en sala y las renovaciones, mientras que calculadoras y " +
+      "notebooks son casi siempre préstamo puro.</p>",
+      "Solo tipo PRÉSTAMO") +
+
+    seccion("Renovaciones",
+      '<div class="grilla-2">' +
+        '<div><div class="caja-grafico"><canvas id="g-mf-renov-evo"></canvas></div></div>' +
+        '<div><div class="envoltorio-tabla limitada" id="cont-mf-renov"></div></div>' +
+      "</div>",
+      "Serie mensual y volumen por sede") +
+
+    seccion("Lugar de la transacción",
+      '<div id="cont-mf-prestamos"></div>' +
+      '<div style="height:18px"></div>' +
+      '<div id="cont-mf-renovaciones"></div>' +
+      '<p class="nota">Los préstamos solo pueden realizarse en mesón o en autopréstamo; las renovaciones ' +
+      "suman además la vía en línea. Es la distinción que permite medir la adopción real del autoservicio " +
+      "en cada sede, porque compara cada transacción contra las modalidades que sí tenía disponibles.</p>",
+      "Adopción del autopréstamo, separando préstamos de renovaciones") +
+
+    seccion("Préstamos físicos por perfil",
+      '<div class="grilla-2">' +
+        '<div><div class="caja-grafico"><canvas id="g-mf-perfil"></canvas></div></div>' +
+        '<div><div class="envoltorio-tabla limitada" id="cont-mf-perfil"></div></div>' +
+      "</div>" +
+      '<p class="nota">Considera únicamente las transacciones de tipo PRÉSTAMO. Quedan fuera las renovaciones ' +
+      "y el uso en sala, que no llevan perfil de usuario asociado.</p>",
+      "Solo tipo PRÉSTAMO");
+
+  /* Evolución: solo préstamos. */
+  dibujarSerieCruzada("g-mf-evo", ind.id, "tipoEstacion", C.tipoPrestamoPuro, undefined);
+  dibujarBarrasSede("g-mf-sede", ind.id, "valor");
+  /* Carrera y material se miden sobre préstamos, igual que perfil: es lo que dicen
+     sus títulos y lo que tiene sentido, porque el uso en sala no lleva usuario. */
+  dibujarBarrasHorizontal("g-mf-carrera",
+    recortarTop(agruparCarreras(desgloseCruzado(ind.id, "tipoCarrera", C.tipoPrestamoPuro, { anio: ref, meses })),
+                C.topCarreras, "Otras carreras"),
+    "Préstamos");
+
+  const materiales = desgloseCruzado(ind.id, "tipoItem", C.tipoPrestamoPuro, { anio: ref, meses });
+  dibujarBarrasHorizontal("g-mf-item", recortarTop(materiales, 12, "Otros materiales"), "Préstamos");
+  tablaDesglose("cont-mf-item", recortarTop(materiales, 12, "Otros materiales"), "Tipo de material", "Préstamos");
+
+  dibujarSerieDimension("g-mf-renov-evo", ind.id, "tipo", C.tipoRenovacion, "Renovaciones por mes");
+  tablaVolumenSede("cont-mf-renov", ind.id, "tipo", C.tipoRenovacion, "Renovaciones");
+
+  tablaModalidadPorTipo("cont-mf-prestamos", ind.id, C.tipoPrestamoPuro, C.modalidadesPrestamo, "Préstamos");
+  tablaModalidadPorTipo("cont-mf-renovaciones", ind.id, C.tipoRenovacion, C.modalidadesRenovacion, "Renovaciones");
+
+  const perfiles = agruparPerfilesOperativos(
+    desgloseCruzado(ind.id, "tipoPerfil", C.tipoPrestamoPuro, { anio: ref, meses }));
+  dibujarBarrasHorizontal("g-mf-perfil", recortarTop(perfiles, 10, "Otros perfiles"), "Préstamos");
+  tablaDesglose("cont-mf-perfil", recortarTop(perfiles, 10, "Otros perfiles"), "Perfil", "Préstamos");
+}
+
+/** Agrupa los perfiles operativos (no corresponden a un usuario real). */
+function agruparPerfilesOperativos(lista){
+  const op = new Set(CONFIG.criterios.perfilesOperativos.map(norm));
+  let acum = 0;
+  const salida = [];
+  lista.forEach(x => { if (op.has(norm(x.etiqueta))) acum += x.valor; else salida.push(x); });
+  salida.sort((a, b) => b.valor - a.valor);
+  if (acum > 0) salida.push({ etiqueta: "Perfiles operativos", valor: acum, esResto: true });
+  return salida;
+}
+
+/* ==================================================================================
+   VISTA T. DIGITAL
+   ================================================================================== */
+function renderTDigital(){
+  const ind = indicadorDe("transacciones_digitales");
+  const cont = document.getElementById("vista-transacciones_digitales");
+  const d = ESTADO.datos[ind.id];
+  if (!d || d.estado !== "ok"){ cont.innerHTML = cabeceraVista(ind.nombre) + bloqueError(ind); return; }
+
+  const { ref, prev, hayPrev } = anios();
+  const meses = mesesSeleccionados();
+  const totalPeriodo = total(ind.id, { anio: ref, meses });
+  const totalPrev = hayPrev ? total(ind.id, { anio: prev, meses }) : null;
+  const recursos = desglose(ind.id, "recurso", { anio: ref, meses });
+  const categorias = desglose(ind.id, "categoria", { anio: ref, meses });
+
+  const unicos = unicosDe(ind.id, { anio: ref, meses });
+  const unicosPrev = hayPrev ? unicosDe(ind.id, { anio: prev, meses }) : null;
+
+  const kpis =
+    tarjeta("Accesos totales", totalPeriodo, "", {
+      anterior: hayPrev ? totalPrev : undefined, etiquetaAnterior: etiquetaSeleccion(prev) }) +
+    tarjeta("Usuarios únicos", unicos, "personas", {
+      anterior: hayPrev ? unicosPrev : undefined, etiquetaAnterior: etiquetaSeleccion(prev),
+      secundario: unicos ? "Promedio: <b>" + FMT_DECIMAL.format(totalPeriodo / unicos) + "</b> accesos por persona" : "" }) +
+    tarjeta("Recursos distintos usados", recursos.length, "recursos", {
+      pie: "<span>de " + (d.valoresDim.recurso ? d.valoresDim.recurso.length : recursos.length) + " disponibles en el año</span>" }) +
+    tarjeta("Recurso más consultado", recursos.length ? recursos[0].valor : null, "", {
+      pie: "<span>" + escapar(recursos.length ? recursos[0].etiqueta : "—") + "</span>" });
+
+  cont.innerHTML = cabeceraVista(ind.nombre) +
+    '<div class="grilla-kpi">' + kpis + "</div>" +
+
+    seccion("Evolución mensual",
+      '<div class="caja-grafico"><canvas id="g-td-evo"></canvas></div>',
+      hayPrev ? "Año actual vs. año anterior" : "Año " + ref) +
+
+    seccion("Comparativa por sede",
+      '<div class="caja-grafico alta"><canvas id="g-td-sede"></canvas></div>') +
+
+    seccion("Ranking de recursos digitales",
+      '<div class="grilla-2">' +
+        '<div><div class="caja-grafico alta"><canvas id="g-td-recurso"></canvas></div></div>' +
+        '<div><div class="envoltorio-tabla limitada" id="cont-td-recurso"></div></div>' +
+      "</div>",
+      "Top " + CONFIG.criterios.topRecursos + " plataformas, el resto agrupado") +
+
+    seccion("Carreras",
+      '<div class="grilla-2">' +
+        '<div><div class="caja-grafico alta"><canvas id="g-td-carrera"></canvas></div></div>' +
+        '<div><div class="envoltorio-tabla limitada" id="cont-td-carrera"></div></div>' +
+      "</div>" +
+      '<p class="nota">Los accesos de perfiles sin carrera asociada (docentes, administrativos, invitados y público) ' +
+      'se agrupan explícitamente como <strong>«No aplica»</strong>, no se descartan, para que se vea qué proporción del ' +
+      "uso proviene de perfiles no identificables por carrera.</p>",
+      "Distribución del uso por carrera") +
+
+    seccion("Uso por perfil",
+      '<div class="grilla-2">' +
+        '<div><div class="caja-grafico"><canvas id="g-td-perfil"></canvas></div></div>' +
+        '<div><div class="envoltorio-tabla limitada" id="cont-td-perfil"></div></div>' +
+      "</div>" +
+      '<p class="nota"><strong>Sobre los usuarios únicos:</strong> son personas distintas identificadas por RUT, ' +
+      "y no se pueden sumar entre períodos. Quien accede en marzo y en abril cuenta una sola vez en el acumulado. " +
+      "Por eso el total del año es menor que la suma de los meses.</p>");
+
+  const topRec = recortarTop(recursos, CONFIG.criterios.topRecursos, "Otros recursos");
+  const carreras = recortarTop(agruparCarreras(desglose(ind.id, "carrera", { anio: ref, meses })), CONFIG.criterios.topCarreras, "Otras carreras");
+  const perfiles = desglose(ind.id, "perfil", { anio: ref, meses });
+
+  dibujarEvolucion("g-td-evo", ind.id, "valor");
+  dibujarBarrasSede("g-td-sede", ind.id, "valor");
+  dibujarBarrasHorizontal("g-td-recurso", topRec, "Accesos");
+  tablaDesglose("cont-td-recurso", topRec, "Recurso", "Accesos");
+  dibujarBarrasHorizontal("g-td-carrera", carreras, "Accesos");
+  tablaDesglose("cont-td-carrera", carreras, "Carrera", "Accesos");
+  dibujarTorta("g-td-perfil", perfiles);
+  tablaDesglose("cont-td-perfil", perfiles, "Perfil", "Accesos");
+}
+
+/* ==================================================================================
+   VISTA CUENTA PERSONAS
+   ================================================================================== */
+function renderCuentaPersonas(){
+  const ind = indicadorDe("cuenta_personas");
+  const cont = document.getElementById("vista-cuenta_personas");
+  const d = ESTADO.datos[ind.id];
+  if (!d || d.estado !== "ok"){ cont.innerHTML = cabeceraVista(ind.nombre) + bloqueError(ind); return; }
+
+  const { ref, prev, hayPrev } = anios();
+  const meses = mesesSeleccionados();
+  /* Campus Virtual y Casa Central quedan fuera: no tienen espacio físico. */
+  const sedes = sedesDe(ind.id);
+  const ingresos = total(ind.id, { anio: ref, meses });
+  const ingresosPrev = hayPrev ? total(ind.id, { anio: prev, meses }) : null;
+
+  const porSede = sedes.map(s => ({ sede: s, valor: total(ind.id, { anio: ref, meses, sede: s }) }))
+                       .filter(x => x.valor !== null).sort((a, b) => b.valor - a.valor);
+  const promedioMensual = meses.length ? Math.round((ingresos || 0) / meses.length) : null;
+
+  const kpis =
+    tarjeta("Ingresos totales", ingresos, "visitas", {
+      anterior: hayPrev ? ingresosPrev : undefined, etiquetaAnterior: etiquetaSeleccion(prev) }) +
+    tarjeta("Promedio mensual", promedioMensual, "visitas/mes", {
+      pie: "<span>sobre " + meses.length + (meses.length === 1 ? " mes" : " meses") + " del período</span>" }) +
+    tarjeta("Sede con más ingresos", porSede.length ? porSede[0].valor : null, "visitas", {
+      pie: "<span>" + escapar(porSede.length ? porSede[0].sede : "—") + "</span>" }) +
+    tarjeta("Sedes con registro", porSede.length, "de " + sedes.length, {
+      pie: "<span>cuentan con arcos de conteo activos</span>" });
+
+  cont.innerHTML = cabeceraVista(ind.nombre) +
+    '<div class="grilla-kpi">' + kpis + "</div>" +
+
+    seccion("Evolución mensual",
+      '<div class="caja-grafico"><canvas id="g-cp-evo"></canvas></div>',
+      hayPrev ? "Año actual vs. año anterior" : "Año " + ref) +
+
+    seccion("Comparativo por sede",
+      '<div class="caja-grafico alta"><canvas id="g-cp-sede"></canvas></div>') +
+
+    seccion("Detalle mensual por sede",
+      '<div class="envoltorio-tabla" id="cont-cp-tabla"></div>' +
+      '<p class="nota"><strong>Sobre esta métrica:</strong> ' + escapar(ind.nota) +
+      " Por eso las cifras se expresan como ingresos o visitas, y no como cantidad de personas distintas.</p>",
+      "Ingresos registrados mes a mes");
+
+  dibujarEvolucion("g-cp-evo", ind.id, "valor");
+  dibujarBarrasSede("g-cp-sede", ind.id, "valor");
+  tablaMensualPorSede("cont-cp-tabla", ind.id);
+}
+
+/* ==================================================================================
+   VISTA ACCIONES FORMATIVAS
+   Replica el dashboard de referencia, sin «Origen de la actividad» (requiere la
+   columna «Nombre sede participante», que esta hoja no trae).
+   ================================================================================== */
+function renderAccionesFormativas(){
+  const ind = indicadorDe("acciones_formativas");
+  const cont = document.getElementById("vista-acciones_formativas");
+  const d = ESTADO.datos[ind.id];
+  if (!d || d.estado !== "ok"){ cont.innerHTML = cabeceraVista(ind.nombre) + bloqueError(ind); return; }
+
+  const { ref, prev, hayPrev } = anios();
+  const filas = filasAF({ anio: ref });
+  const m = metricasAF(filas);
+  const mPrev = hayPrev ? metricasAF(filasAF({ anio: prev })) : null;
+
+  const kpis =
+    tarjeta("Participaciones", m.participaciones, "", {
+      anterior: mPrev ? mPrev.participaciones : undefined, etiquetaAnterior: etiquetaSeleccion(prev) }) +
+    tarjeta("Participantes únicos", m.unicos, "", {
+      pie: "<span>personas distintas por RUT</span>" }) +
+    tarjeta("Actividades realizadas", m.actividades, "", {
+      pie: "<span>" + (m.actividades ? FMT_DECIMAL.format(m.participaciones / m.actividades) : "—") + " asistentes por actividad</span>" }) +
+    tarjeta("Sedes activas", m.sedes, "de " + sedesVisibles().length, {
+      pie: "<span>bibliotecas con actividad</span>" }) +
+    tarjeta("Enfoque IA", m.ia, "", {
+      pie: "<span>" + pct(m.ia, m.participaciones) + " de las participaciones</span>" });
+
+  cont.innerHTML = cabeceraVista(ind.nombre) +
+    filtrosLocalesAF() +
+    '<div class="grilla-kpi cinco">' + kpis + "</div>" +
+
+    seccion("Evolución mensual",
+      '<div class="caja-grafico"><canvas id="g-af-evo"></canvas></div>',
+      hayPrev ? "Año actual vs. año anterior" : "Año " + ref) +
+
+    seccion("Participantes por sede",
+      '<div class="caja-grafico alta"><canvas id="g-af-sede"></canvas></div>') +
+
+    '<div class="grilla-mitad">' +
+      seccion("Tipo de actividad",
+        '<div class="caja-grafico"><canvas id="g-af-tipo"></canvas></div>',
+        "Inducción, taller, asesoría, charla") +
+      seccion("Jornada del participante",
+        '<div class="caja-grafico"><canvas id="g-af-jornada"></canvas></div>',
+        "Tipo de usuario que asiste") +
+    "</div>" +
+
+    seccion("Ranking de talleres",
+      '<ol class="ranking" id="cont-af-ranking"></ol>',
+      "Acciones formativas con más participaciones") +
+
+    seccion("Participación por carrera",
+      '<div class="grilla-2">' +
+        '<div><div class="caja-grafico alta"><canvas id="g-af-carrera"></canvas></div></div>' +
+        '<div><div class="envoltorio-tabla limitada" id="cont-af-carrera"></div></div>' +
+      "</div>",
+      "Carreras de origen de los asistentes") +
+
+    '<div class="grilla-mitad">' +
+      seccion("Talleres de IA",
+        '<div class="caja-grafico baja"><canvas id="g-af-ia"></canvas></div>',
+        "Peso de la formación en IA") +
+      seccion("Formato",
+        '<div class="caja-grafico baja"><canvas id="g-af-formato"></canvas></div>',
+        "Presencial vs. en línea") +
+    "</div>" +
+
+    seccion("Detalle de actividades",
+      '<div class="envoltorio-tabla limitada" id="cont-af-detalle"></div>' +
+      '<p class="nota">Cada fila es una actividad: combinación de sede, fecha y nombre oficial. ' +
+      escapar(ind.nota) + "</p>");
+
+  activarFiltrosLocalesAF();
+
+  const porSede = contarAFPorSede(filas);
+  const ordenSede = sedesVisibles().map(s => ({ etiqueta: s, valor: porSede.get(s) || 0 }))
+                                   .sort((a, b) => b.valor - a.valor);
+
+  dibujarEvolucionAF("g-af-evo");
+  dibujarBarrasHorizontal("g-af-sede", ordenSede, "Participaciones");
+  dibujarTorta("g-af-tipo", contarAF(filas, "actividad"));
+  dibujarTorta("g-af-jornada", contarAF(filas, "tipoUsuario"));
+  rankingTalleres("cont-af-ranking", filas);
+  const carreras = recortarTop(agruparCarreras(contarAF(filas, "carrera")), CONFIG.criterios.topCarreras, "Otras carreras");
+  dibujarBarrasHorizontal("g-af-carrera", carreras, "Participaciones");
+  tablaDesglose("cont-af-carrera", carreras, "Carrera", "Participaciones");
+  dibujarTorta("g-af-ia", contarAF(filas, "ia"));
+  dibujarTorta("g-af-formato", contarAF(filas, "formato"));
+  tablaDetalleAF("cont-af-detalle", filas);
+}
+
+/** Barra de filtros propios de la vista. */
+function filtrosLocalesAF(){
+  const d = ESTADO.datos.acciones_formativas;
+  const det = d.detalle;
+  const f = ESTADO.filtrosAF;
+  const opts = (campo, sel, etiquetaTodos) => {
+    const valores = det.dicc[campo].slice().sort((a, b) => String(a).localeCompare(String(b), "es"));
+    return '<option value="">' + etiquetaTodos + "</option>" +
+      valores.map(v => '<option value="' + escapar(v) + '"' + (v === sel ? " selected" : "") + ">" + escapar(v) + "</option>").join("");
+  };
+  return '<div class="filtros-locales">' +
+    '<span class="titulo">Filtros de esta vista</span>' +
+    '<select class="control" id="af-actividad" aria-label="Tipo de actividad">' + opts("actividad", f.actividad, "Todos los tipos") + "</select>" +
+    '<select class="control" id="af-accion" aria-label="Nombre de la actividad">' + opts("accion", f.accion, "Todas las actividades") + "</select>" +
+    '<select class="control" id="af-carrera" aria-label="Carrera">' + opts("carrera", f.carrera, "Todas las carreras") + "</select>" +
+    '<select class="control" id="af-ia" aria-label="Taller de IA">' + opts("ia", f.ia, "IA: todas") + "</select>" +
+    (hayFiltrosAF() ? '<button type="button" class="limpiar" id="af-limpiar">Limpiar filtros</button>' : "") +
+    "</div>";
+}
+function activarFiltrosLocalesAF(){
+  const enlazar = (id, campo) => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener("change", () => { ESTADO.filtrosAF[campo] = el.value; renderizar(); });
+  };
+  enlazar("af-actividad", "actividad");
+  enlazar("af-accion", "accion");
+  enlazar("af-carrera", "carrera");
+  enlazar("af-ia", "ia");
+  const limpiar = document.getElementById("af-limpiar");
+  if (limpiar) limpiar.addEventListener("click", () => {
+    ESTADO.filtrosAF = { actividad: "", accion: "", carrera: "", ia: "" };
+    renderizar();
+  });
+}
+
+function rankingTalleres(id, filas){
+  const cont = document.getElementById(id);
+  if (!cont) return;
+  const det = ESTADO.datos.acciones_formativas.detalle;
+  const acum = new Map();
+  for (const r of filas){
+    const nombre = det.dicc.accion[r.accion];
+    let a = acum.get(nombre);
+    if (!a){ a = { participaciones: 0, sesiones: new Set() }; acum.set(nombre, a); }
+    a.participaciones++;
+    a.sesiones.add(r.s + "|" + r.f);
+  }
+  const lista = [...acum.entries()].map(([nombre, a]) => ({ nombre, participaciones: a.participaciones, sesiones: a.sesiones.size }))
+    .sort((a, b) => b.participaciones - a.participaciones).slice(0, CONFIG.criterios.topTalleres);
+  if (lista.length === 0){ cont.innerHTML = '<li class="vacio">Sin actividades en el período</li>'; return; }
+  cont.innerHTML = lista.map(x =>
+    '<li><span class="nom">' + escapar(x.nombre) +
+    '<span class="sec"> · ' + x.sesiones + (x.sesiones === 1 ? " sesión" : " sesiones") + "</span></span>" +
+    '<span class="num">' + fmtTxt(x.participaciones) + "</span></li>").join("");
+}
+
+function tablaDetalleAF(id, filas){
+  const cont = document.getElementById(id);
+  if (!cont) return;
+  const acts = actividadesAF(filas);
+  if (acts.length === 0){ cont.innerHTML = '<div class="vacio">Sin actividades en el período seleccionado.</div>'; return; }
+
+  const o = ESTADO.orden.afDetalle;
+  if (o){
+    const campos = ["accion", "tipo", "sede", "mes", "fecha", "ia", "asistentes"];
+    const c = campos[o.col];
+    acts.sort((x, y) => (typeof x[c] === "number")
+      ? comparar(x[c], y[c], o.dir)
+      : String(x[c]).localeCompare(String(y[c]), "es") * o.dir);
+  } else {
+    acts.sort((a, b) => b.asistentes - a.asistentes);
+  }
+
+  let html = '<table class="datos compacta"><thead><tr>' +
+    th("Acción formativa", 0, "afDetalle", "izq") + th("Tipo", 1, "afDetalle", "izq") +
+    th("Sede", 2, "afDetalle", "izq") + th("Mes", 3, "afDetalle", "izq") +
+    th("Fecha", 4, "afDetalle", "izq") + th("IA", 5, "afDetalle", "izq") +
+    th("Asistentes", 6, "afDetalle", "") + "</tr></thead><tbody>";
+  acts.forEach(a => {
+    html += '<tr><td class="izq">' + escapar(a.accion) + "</td>" +
+      '<td class="izq normal">' + escapar(a.tipo) + "</td>" +
+      '<td class="izq normal">' + escapar(a.sede) + "</td>" +
+      '<td class="izq normal">' + nombreMes(a.mes) + "</td>" +
+      '<td class="izq normal">' + escapar(a.fecha) + "</td>" +
+      '<td class="izq normal">' + escapar(a.ia) + "</td>" +
+      "<td>" + fmt(a.asistentes) + "</td></tr>";
+  });
+  const tot = acts.reduce((t, a) => t + a.asistentes, 0);
+  html += "</tbody><tfoot><tr><td class='izq' colspan='6'>" + acts.length + " actividades</td><td>" + fmt(tot) + "</td></tr></tfoot></table>";
+  cont.innerHTML = html;
+  activarOrden(cont, "afDetalle", () => tablaDetalleAF(id, filas));
+}
+</script>
+<script>
+"use strict";
+/* ==================================================================================
+   TABLAS AUXILIARES
+   ================================================================================== */
+function th(etiqueta, indice, clave, clases){
+  const o = ESTADO.orden[clave];
+  let cls = "ordenable " + (clases || "");
+  if (o && o.col === indice) cls += o.dir === 1 ? " ord-asc" : " ord-desc";
+  const ind = (o && o.col === indice) ? (o.dir === 1 ? "▲" : "▼") : "⇅";
+  return '<th class="' + cls.trim() + '" data-col="' + indice + '">' + escapar(etiqueta) + '<span class="ind">' + ind + "</span></th>";
+}
+function activarOrden(cont, clave, redibujar){
+  cont.querySelectorAll("th.ordenable").forEach(el => {
+    el.addEventListener("click", () => {
+      const col = +el.dataset.col;
+      const o = ESTADO.orden[clave];
+      ESTADO.orden[clave] = (o && o.col === col) ? { col, dir: -o.dir } : { col, dir: col === 0 ? 1 : -1 };
+      redibujar();
+    });
+  });
+}
+/** null siempre al final, sin importar la dirección. */
+function comparar(a, b, dir){
+  const na = (a === null || a === undefined || !Number.isFinite(a));
+  const nb = (b === null || b === undefined || !Number.isFinite(b));
+  if (na && nb) return 0;
+  if (na) return 1;
+  if (nb) return -1;
+  return (a - b) * dir;
+}
+
+/** Tabla simple de un desglose, con porcentaje y barra de proporción. */
+function tablaDesglose(id, lista, etiquetaCol, etiquetaValor){
+  const cont = document.getElementById(id);
+  if (!cont) return;
+  if (!lista.length){ cont.innerHTML = '<div class="vacio">Sin datos en el período seleccionado.</div>'; return; }
+  const suma = lista.reduce((t, x) => t + x.valor, 0);
+  const max = Math.max(...lista.map(x => x.valor));
+  let html = '<table class="datos compacta"><thead><tr><th class="izq">' + escapar(etiquetaCol) +
+    "</th><th>" + escapar(etiquetaValor) + "</th><th>%</th></tr></thead><tbody>";
+  lista.forEach(x => {
+    html += '<tr><td class="izq normal">' + escapar(x.etiqueta) + "</td><td>" + fmt(x.valor) +
+      '<span class="barra-prop"><i style="width:' + (max ? (x.valor / max) * 100 : 0) + '%"></i></span></td>' +
+      "<td>" + pct(x.valor, suma) + "</td></tr>";
+  });
+  html += "</tbody><tfoot><tr><td class='izq'>Total</td><td>" + fmt(suma) + "</td><td>100,0%</td></tr></tfoot></table>";
+  cont.innerHTML = html;
+}
+
+/** Proporción de un valor de dimensión sobre el total, por sede. */
+function tablaProporcionSede(id, idInd, dim, valorDim, etiqueta, etiquetaPct){
+  const cont = document.getElementById(id);
+  if (!cont) return;
+  const { ref } = anios();
+  const meses = mesesSeleccionados();
+  const porSede = desglosePorSede(idInd, dim, valorDim, { anio: ref, meses });
+  const filas = sedesDe(idInd).map(s => {
+    const parte = porSede.get(s) || 0;
+    const tot = total(idInd, { anio: ref, meses, sede: s });
+    return { sede: s, parte, total: tot, prop: tot ? parte / tot : null };
+  }).filter(x => x.total).sort((a, b) => (b.prop || 0) - (a.prop || 0));
+
+  if (!filas.length){ cont.innerHTML = '<div class="vacio">Sin datos.</div>'; return; }
+  let html = '<table class="datos compacta"><thead><tr><th class="izq">Sede</th><th>' + escapar(etiqueta) +
+    "</th><th>Total</th><th>" + escapar(etiquetaPct) + "</th></tr></thead><tbody>";
+  filas.forEach(f => {
+    html += '<tr><td class="izq normal">' + escapar(f.sede) + "</td><td>" + fmt(f.parte) + "</td><td>" + fmt(f.total) +
+      "</td><td>" + (f.prop === null ? "—" : FMT_DECIMAL.format(f.prop * 100) + "%") +
+      '<span class="barra-prop"><i style="width:' + ((f.prop || 0) * 100) + '%"></i></span></td></tr>';
+  });
+  const tp = filas.reduce((t, f) => t + f.parte, 0), tt = filas.reduce((t, f) => t + f.total, 0);
+  html += "</tbody><tfoot><tr><td class='izq'>Sistema</td><td>" + fmt(tp) + "</td><td>" + fmt(tt) +
+    "</td><td>" + pct(tp, tt) + "</td></tr></tfoot></table>";
+  cont.innerHTML = html;
+}
+
+/**
+ * Modalidad de atención por sede, para un tipo de transacción concreto.
+ * Se usa dos veces: una para préstamos (mesón / autopréstamo) y otra para
+ * renovaciones (mesón / autopréstamo / en línea).
+ */
+function tablaModalidadPorTipo(id, idInd, tipo, modalidades, etiquetaTipo){
+  const cont = document.getElementById(id);
+  if (!cont) return;
+  const { ref } = anios();
+  const meses = mesesSeleccionados();
+  const porMod = modalidades.map(m => cruzadoPorSede(idInd, "tipoEstacion", tipo, m, { anio: ref, meses }));
+
+  const filas = sedesDe(idInd).map(s => {
+    const vals = porMod.map(m => m.get(s) || 0);
+    return { sede: s, vals, suma: vals.reduce((a, b) => a + b, 0) };
+  }).filter(x => x.suma > 0);
+
+  const claveOrden = "mod_" + norm(tipo).replace(/\W/g, "");
+  if (!filas.length){
+    cont.innerHTML = '<h3 style="font-size:12px;font-weight:900;text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px">' +
+      escapar(etiquetaTipo) + '</h3><div class="vacio">Sin datos en el período seleccionado.</div>';
+    return;
+  }
+
+  const o = ESTADO.orden[claveOrden];
+  const iAuto = modalidades.findIndex(m => /autoprestamo/.test(norm(m)));
+  if (o){
+    if (o.col === 0) filas.sort((a, b) => a.sede.localeCompare(b.sede, "es") * o.dir);
+    else if (o.col === modalidades.length * 2 + 1) filas.sort((a, b) => comparar(a.suma, b.suma, o.dir));
+    else {
+      const i = o.col - 1, iMod = Math.floor(i / 2), esPct = (i % 2) === 1;
+      filas.sort((a, b) => comparar(esPct ? a.vals[iMod] / a.suma : a.vals[iMod],
+                                    esPct ? b.vals[iMod] / b.suma : b.vals[iMod], o.dir));
+    }
+  } else if (iAuto !== -1){
+    /* Por defecto, mayor adopción del autopréstamo primero. */
+    filas.sort((a, b) => (b.vals[iAuto] / b.suma) - (a.vals[iAuto] / a.suma));
+  }
+
+  const corto = m => {
+    const n = norm(m);
+    if (n.includes("meson")) return "Mesón";
+    if (n.includes("linea")) return "En línea";
+    if (n.includes("autoprestamo")) return "Autopréstamo";
+    return m;
+  };
+  const tot = modalidades.map((_, i) => filas.reduce((t, f) => t + f.vals[i], 0));
+  const totSuma = tot.reduce((a, b) => a + b, 0);
+
+  let html = '<h3 style="font-size:12px;font-weight:900;text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px">' +
+    escapar(etiquetaTipo) + ' <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--texto-tenue)">· ' +
+    fmtTxt(totSuma) + " en total" +
+    (iAuto !== -1 ? " · " + pct(tot[iAuto], totSuma) + " por autopréstamo" : "") + "</span></h3>";
+  html += '<div class="envoltorio-tabla"><table class="datos compacta"><thead><tr>' + th("Sede", 0, claveOrden, "izq");
+  let c = 1;
+  modalidades.forEach(m => { html += th(corto(m), c++, claveOrden, "sep-izq") + th("%", c++, claveOrden, ""); });
+  html += th("Total", modalidades.length * 2 + 1, claveOrden, "sep-izq") + "</tr></thead><tbody>";
+  filas.forEach(f => {
+    html += '<tr><td class="izq normal">' + escapar(f.sede) + "</td>";
+    f.vals.forEach((v, i) => {
+      html += '<td class="sep-izq">' + fmt(v) + "</td><td>" + pct(v, f.suma) +
+        (i === iAuto ? '<span class="barra-prop"><i style="width:' + ((v / f.suma) * 100) + '%"></i></span>' : "") + "</td>";
+    });
+    html += '<td class="sep-izq">' + fmt(f.suma) + "</td></tr>";
+  });
+  html += "</tbody><tfoot><tr><td class='izq'>Sistema</td>";
+  tot.forEach(v => { html += '<td class="sep-izq">' + fmt(v) + "</td><td>" + pct(v, totSuma) + "</td>"; });
+  html += '<td class="sep-izq">' + fmt(totSuma) + "</td></tr></tfoot></table></div>";
+  cont.innerHTML = html;
+  activarOrden(cont, claveOrden, () => tablaModalidadPorTipo(id, idInd, tipo, modalidades, etiquetaTipo));
+}
+
+/** Volumen por sede de un valor de dimensión, sin columnas de total ni porcentaje. */
+function tablaVolumenSede(id, idInd, dim, valorDim, etiqueta){
+  const cont = document.getElementById(id);
+  if (!cont) return;
+  const { ref } = anios();
+  const porSede = desglosePorSede(idInd, dim, valorDim, { anio: ref, meses: mesesSeleccionados() });
+  const filas = sedesDe(idInd).map(s => ({ sede: s, valor: porSede.get(s) || 0 }))
+                              .filter(x => x.valor > 0).sort((a, b) => b.valor - a.valor);
+  if (!filas.length){ cont.innerHTML = '<div class="vacio">Sin datos.</div>'; return; }
+  const max = filas[0].valor;
+  let html = '<table class="datos compacta"><thead><tr><th class="izq">Sede</th><th>' + escapar(etiqueta) +
+    "</th></tr></thead><tbody>";
+  filas.forEach(f => {
+    html += '<tr><td class="izq normal">' + escapar(f.sede) + "</td><td>" + fmt(f.valor) +
+      '<span class="barra-prop"><i style="width:' + (max ? (f.valor / max) * 100 : 0) + '%"></i></span></td></tr>';
+  });
+  html += "</tbody><tfoot><tr><td class='izq'>Sistema</td><td>" +
+    fmt(filas.reduce((t, f) => t + f.valor, 0)) + "</td></tr></tfoot></table>";
+  cont.innerHTML = html;
+}
+
+/** Matriz sede × mes del indicador, con total del período. */
+function tablaMensualPorSede(id, idInd){
+  const cont = document.getElementById(id);
+  if (!cont) return;
+  const { ref } = anios();
+  const meses = mesesConDatos(ref);
+  const sedes = sedesDe(idInd);
+  if (!sedes.length || !meses.length){ cont.innerHTML = '<div class="vacio">Sin datos.</div>'; return; }
+  const sel = new Set(mesesSeleccionados());
+
+  const filas = sedes.map(s => ({
+    sede: s,
+    vals: meses.map(m => total(idInd, { anio: ref, meses: [m], sede: s })),
+    tot: total(idInd, { anio: ref, meses: mesesSeleccionados(), sede: s })
+  }));
+
+  const o = ESTADO.orden.cpMensual;
+  if (o){
+    if (o.col === 0) filas.sort((a, b) => a.sede.localeCompare(b.sede, "es") * o.dir);
+    else if (o.col === meses.length + 1) filas.sort((a, b) => comparar(a.tot, b.tot, o.dir));
+    else filas.sort((a, b) => comparar(a.vals[o.col - 1], b.vals[o.col - 1], o.dir));
+  }
+
+  let html = '<table class="datos"><thead><tr>' + th("Sede", 0, "cpMensual", "izq");
+  meses.forEach((m, i) => { html += th(CONFIG.mesesCortos[m - 1], i + 1, "cpMensual", sel.has(m) ? "" : ""); });
+  html += th("Período", meses.length + 1, "cpMensual", "sep-izq") + "</tr></thead><tbody>";
+  filas.forEach(f => {
+    html += '<tr><td class="izq">' + escapar(f.sede) + "</td>";
+    f.vals.forEach(v => { html += "<td>" + fmt(v) + "</td>"; });
+    html += '<td class="sep-izq">' + fmt(f.tot) + "</td></tr>";
+  });
+  html += "</tbody><tfoot><tr><td class='izq'>Total sistema</td>";
+  meses.forEach(m => { html += "<td>" + fmt(total(idInd, { anio: ref, meses: [m] })) + "</td>"; });
+  html += '<td class="sep-izq">' + fmt(total(idInd, { anio: ref, meses: mesesSeleccionados() })) + "</td></tr></tfoot></table>";
+  cont.innerHTML = html;
+  activarOrden(cont, "cpMensual", () => tablaMensualPorSede(id, idInd));
+}
+
+/* ==================================================================================
+   GRÁFICOS
+   ================================================================================== */
+Chart.defaults.font.family = "'Lato', sans-serif";
+Chart.defaults.font.size = 11;
+Chart.defaults.color = "#5B5B66";
+/* Animación breve solo al construir: da sensación de respuesta sin entorpecer. */
+Chart.defaults.animation = { duration: 380, easing: "easeOutQuart" };
+Chart.defaults.animations = { colors: false, x: false };
+/* Defensivo: la ruta de transiciones cambió entre versiones de Chart.js. */
+try { Chart.defaults.transitions.active.animation.duration = 140; } catch (e){}
+
+/* Línea vertical de seguimiento bajo el cursor, como en las apps de analítica. */
+const plugadaSeguimiento = {
+  id: "seguimiento",
+  afterDatasetsDraw(chart){
+    const act = chart.tooltip && chart.tooltip.getActiveElements ? chart.tooltip.getActiveElements() : [];
+    if (!act.length) return;
+    const x = act[0].element.x;
+    const { top, bottom } = chart.chartArea;
+    const c = chart.ctx;
+    c.save();
+    c.beginPath();
+    c.setLineDash([3, 3]);
+    c.lineWidth = 1;
+    c.strokeStyle = "rgba(11,11,13,.28)";
+    c.moveTo(x, top); c.lineTo(x, bottom); c.stroke();
+    c.restore();
+  }
+};
+if (typeof Chart.register === "function") Chart.register(plugadaSeguimiento);
+
+/** Degradado vertical para el relleno bajo una línea. */
+function areaDegradada(chart, color){
+  const { ctx: c, chartArea } = chart;
+  if (!chartArea) return "rgba(245,168,0,.14)";
+  const g = c.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
+  g.addColorStop(0, color.replace("ALFA", ".22"));
+  g.addColorStop(1, color.replace("ALFA", "0"));
+  return g;
+}
+/** Degradado vertical para barras. */
+function barraDegradada(chart, desde, hasta){
+  const { ctx: c, chartArea } = chart;
+  if (!chartArea) return hasta;
+  const g = c.createLinearGradient(chartArea.left, 0, chartArea.right, 0);
+  g.addColorStop(0, desde); g.addColorStop(1, hasta);
+  return g;
+}
+
+/* Tooltip con elevación y esquinas redondeadas. */
+const tooltipRico = {
+  backgroundColor: "rgba(11,11,13,.94)", titleFont: { weight: "900", size: 12 },
+  bodyFont: { size: 12 }, padding: 12, cornerRadius: 8, displayColors: true,
+  boxPadding: 5, caretSize: 6, borderColor: "rgba(255,255,255,.12)", borderWidth: 1,
+  titleMarginBottom: 7
+};
+
+function destruir(id){
+  if (ESTADO.graficos[id]){ ESTADO.graficos[id].destroy(); delete ESTADO.graficos[id]; }
+}
+function ctx(id){
+  const c = document.getElementById(id);
+  if (!c) return null;
+  destruir(id);
+  return c;
+}
+const ejeY = { beginAtZero: true, grid: { color: "#EFEFF2", drawTicks: false }, border: { display: false },
+               ticks: { callback: v => FMT_ENTERO.format(v), padding: 8 } };
+const ejeX = { grid: { display: false }, border: { color: "#D2D2D8" }, ticks: { padding: 6 } };
+const tooltipBase = tooltipRico;
+
+/* Estilos de serie compartidos: el año anterior en gris punteado y sin relleno;
+   el actual en negro con área degradada ámbar, que da profundidad sin competir. */
+function serieAnterior(etiqueta, datos){
+  return {
+    label: etiqueta, data: datos, borderColor: CONFIG.colores.grisSerie,
+    backgroundColor: "transparent", borderWidth: 2, borderDash: [5, 4],
+    pointRadius: 0, pointHoverRadius: 5, pointHitRadius: 14,
+    pointBackgroundColor: CONFIG.colores.grisSerie, pointBorderColor: "#FFFFFF", pointBorderWidth: 2,
+    tension: .3, spanGaps: false, order: 2
+  };
+}
+function serieActual(etiqueta, datos){
+  return {
+    label: etiqueta, data: datos, borderColor: CONFIG.colores.negro,
+    backgroundColor: (ctx) => areaDegradada(ctx.chart, "rgba(245,168,0,ALFA)"),
+    fill: true, borderWidth: 2.5,
+    pointRadius: 0, pointHoverRadius: 7, pointHitRadius: 14,
+    pointBackgroundColor: CONFIG.colores.amarillo, pointBorderColor: CONFIG.colores.negro,
+    pointBorderWidth: 2, pointHoverBorderWidth: 2.5,
+    tension: .3, spanGaps: false, order: 1
+  };
+}
+
+/** Líneas: año actual vs. año anterior. */
+function dibujarEvolucion(idCanvas, idInd, metrica){
+  const c = ctx(idCanvas); if (!c) return;
+  const { ref, prev, hayPrev } = anios();
+  const serieRef = serieMensual(idInd, ref, metrica);
+  const seriePrev = hayPrev ? serieMensual(idInd, prev, metrica) : null;
+  const datasets = [];
+  if (seriePrev) datasets.push(serieAnterior(String(prev), seriePrev));
+  datasets.push(serieActual(String(ref), serieRef));
+
+  ESTADO.graficos[idCanvas] = new Chart(c, {
+    type: "line",
+    data: { labels: CONFIG.mesesCortos, datasets },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      interaction: { mode: "index", intersect: false },
+      plugins: {
+        legend: { position: "top", align: "end", labels: { boxWidth: 22, boxHeight: 3, padding: 12, usePointStyle: false } },
+        tooltip: Object.assign({}, tooltipBase, { callbacks: {
+          title: it => nombreMes(it[0].dataIndex + 1),
+          label: it => it.dataset.label + ": " + (it.parsed.y === null ? "sin dato" : FMT_ENTERO.format(it.parsed.y)),
+          afterBody: it => {
+            if (!seriePrev) return "";
+            const v = variacion(serieRef[it[0].dataIndex], seriePrev[it[0].dataIndex]);
+            return v === null ? "Variación interanual: n/a"
+              : "Variación interanual: " + (v > 0 ? "+" : "") + FMT_DECIMAL.format(v) + "%";
+          }
+        }})
+      },
+      scales: { x: ejeX, y: ejeY }
+    }
+  });
+}
+
+/** Evolución de Acciones Formativas, respetando los filtros locales. */
+function dibujarEvolucionAF(idCanvas){
+  const c = ctx(idCanvas); if (!c) return;
+  const { ref, prev, hayPrev } = anios();
+  const serieRef = serieAF(ref);
+  const seriePrev = hayPrev ? serieAF(prev) : null;
+  const datasets = [];
+  if (seriePrev) datasets.push(serieAnterior(String(prev), seriePrev));
+  datasets.push(serieActual(String(ref), serieRef));
+
+  ESTADO.graficos[idCanvas] = new Chart(c, {
+    type: "line",
+    data: { labels: CONFIG.mesesCortos, datasets },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      interaction: { mode: "index", intersect: false },
+      plugins: {
+        legend: { position: "top", align: "end", labels: { boxWidth: 22, boxHeight: 3, padding: 12, usePointStyle: false } },
+        tooltip: Object.assign({}, tooltipBase, { callbacks: {
+          title: it => nombreMes(it[0].dataIndex + 1),
+          label: it => it.dataset.label + ": " + (it.parsed.y === null ? "sin dato" : FMT_ENTERO.format(it.parsed.y)) + " participaciones"
+        }})
+      },
+      scales: { x: ejeX, y: ejeY }
+    }
+  });
+}
+
+/** Barras horizontales del total por sede, ordenadas de mayor a menor. */
+function dibujarBarrasSede(idCanvas, idInd, metrica){
+  const { ref, prev, hayPrev } = anios();
+  const meses = mesesSeleccionados();
+  const filas = sedesDe(idInd).map(s => ({
+    etiqueta: s,
+    valor: total(idInd, { anio: ref, meses, sede: s }),
+    anterior: hayPrev ? total(idInd, { anio: prev, meses, sede: s }) : null
+  })).sort((a, b) => comparar(a.valor, b.valor, -1));
+  dibujarBarrasHorizontal(idCanvas, filas, "Total", hayPrev ? { prev, etiquetaPrev: String(prev) } : null);
+}
+
+/** Serie mensual de un valor concreto de una dimensión (ej. solo PRÉSTAMO). */
+function dibujarSerieDimension(idCanvas, idInd, dim, valorDim, etiqueta){
+  const c = ctx(idCanvas); if (!c) return;
+  const { ref, prev, hayPrev } = anios();
+  const serie = (anio) => {
+    const s = new Array(12).fill(null);
+    for (let m = 1; m <= 12; m++){
+      const porSede = desglosePorSede(idInd, dim, valorDim, { anio, meses: [m] });
+      let t = null;
+      porSede.forEach(v => { t = (t === null ? 0 : t) + v; });
+      s[m - 1] = t;
+    }
+    return s;
+  };
+  const sRef = serie(ref), sPrev = hayPrev ? serie(prev) : null;
+  const datasets = [];
+  if (sPrev) datasets.push(serieAnterior(String(prev), sPrev));
+  datasets.push(serieActual(String(ref), sRef));
+
+  ESTADO.graficos[idCanvas] = new Chart(c, {
+    type: "line",
+    data: { labels: CONFIG.mesesCortos, datasets },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      interaction: { mode: "index", intersect: false },
+      plugins: {
+        title: { display: true, text: etiqueta, align: "start", font: { weight: "900", size: 11 }, color: "#111" },
+        legend: { position: "top", align: "end", labels: { boxWidth: 22, boxHeight: 3, padding: 10, usePointStyle: false } },
+        tooltip: Object.assign({}, tooltipBase, { callbacks: {
+          title: it => nombreMes(it[0].dataIndex + 1),
+          label: it => it.dataset.label + ": " + (it.parsed.y === null ? "sin dato" : FMT_ENTERO.format(it.parsed.y))
+        }})
+      },
+      scales: { x: ejeX, y: ejeY }
+    }
+  });
+}
+
+/** Serie mensual de un par cruzado: por ejemplo, solo los préstamos. */
+function dibujarSerieCruzada(idCanvas, idInd, dim, valorA, valorB){
+  const c = ctx(idCanvas); if (!c) return;
+  const { ref, prev, hayPrev } = anios();
+  const sRef = serieCruzada(idInd, dim, valorA, valorB, ref);
+  const sPrev = hayPrev ? serieCruzada(idInd, dim, valorA, valorB, prev) : null;
+  const datasets = [];
+  if (sPrev) datasets.push(serieAnterior(String(prev), sPrev));
+  datasets.push(serieActual(String(ref), sRef));
+
+  ESTADO.graficos[idCanvas] = new Chart(c, {
+    type: "line",
+    data: { labels: CONFIG.mesesCortos, datasets },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      interaction: { mode: "index", intersect: false },
+      plugins: {
+        legend: { position: "top", align: "end", labels: { boxWidth: 22, boxHeight: 3, padding: 12, usePointStyle: false } },
+        tooltip: Object.assign({}, tooltipBase, { callbacks: {
+          title: it => nombreMes(it[0].dataIndex + 1),
+          label: it => it.dataset.label + ": " + (it.parsed.y === null ? "sin dato" : FMT_ENTERO.format(it.parsed.y)),
+          afterBody: it => {
+            if (!sPrev) return "";
+            const v = variacion(sRef[it[0].dataIndex], sPrev[it[0].dataIndex]);
+            return v === null ? "Variación interanual: n/a"
+              : "Variación interanual: " + (v > 0 ? "+" : "") + FMT_DECIMAL.format(v) + "%";
+          }
+        }})
+      },
+      scales: { x: ejeX, y: ejeY }
+    }
+  });
+}
+
+/** Barras agrupadas: una serie por indicador, en porcentaje para poder comparar. */
+function dibujarComparativoPerfil(idCanvas, series, etiquetas){
+  const c = ctx(idCanvas); if (!c) return;
+  const cont = c.parentElement;
+  if (!etiquetas.length){ cont.innerHTML = '<div class="vacio">Sin datos en el período seleccionado.</div>'; return; }
+  const paleta = [CONFIG.colores.negro, CONFIG.colores.amarillo, CONFIG.colores.grisSerie];
+  ESTADO.graficos[idCanvas] = new Chart(c, {
+    type: "bar",
+    data: {
+      labels: etiquetas,
+      datasets: series.map((s, i) => ({
+        label: s.nombre,
+        data: etiquetas.map(e => s.pct[e] === undefined ? 0 : s.pct[e]),
+        backgroundColor: paleta[i % paleta.length],
+        hoverBackgroundColor: i === 1 ? "#D99400" : (i === 0 ? "#3A3A42" : "#9A9AA6"),
+        borderColor: "rgba(11,11,13,.10)", borderWidth: i === 2 ? 1 : 0,
+        borderRadius: 3, borderSkipped: false,
+        barPercentage: .9, categoryPercentage: .74
+      }))
+    },
+    options: {
+      indexAxis: "y", responsive: true, maintainAspectRatio: false,
+      interaction: { mode: "index", axis: "y", intersect: false },
+      plugins: {
+        legend: { position: "top", align: "end",
+                  labels: { boxWidth: 12, boxHeight: 12, padding: 12, usePointStyle: true, pointStyle: "rectRounded" } },
+        tooltip: Object.assign({}, tooltipBase, { callbacks: {
+          label: it => {
+            const s = series[it.datasetIndex], e = it.label;
+            const abs = s.abs[e] || 0;
+            return s.nombre + ": " + FMT_DECIMAL.format(it.parsed.x) + "% (" + FMT_ENTERO.format(abs) + ")";
+          }
+        }})
+      },
+      scales: {
+        x: { beginAtZero: true, grid: { color: "#EFEFF2", drawTicks: false }, border: { display: false },
+             ticks: { callback: v => FMT_DECIMAL.format(v) + "%", padding: 8 } },
+        y: { grid: { display: false }, border: { color: "#D2D2D8" },
+             ticks: { autoSkip: false, font: { size: 11 }, padding: 6 } }
+      }
+    }
+  });
+}
+
+/** Barras por sede de un valor concreto de una dimensión. */
+function dibujarBarrasDimensionSede(idCanvas, idInd, dim, valorDim, etiqueta){
+  const { ref } = anios();
+  const porSede = desglosePorSede(idInd, dim, valorDim, { anio: ref, meses: mesesSeleccionados() });
+  const filas = sedesDe(idInd).map(s => ({ etiqueta: s, valor: porSede.get(s) || 0 }))
+                              .sort((a, b) => b.valor - a.valor);
+  dibujarBarrasHorizontal(idCanvas, filas, etiqueta);
+}
+
+/**
+ * Barras horizontales genéricas.
+ * @param {Array} lista  [{etiqueta, valor, anterior?}]
+ */
+function dibujarBarrasHorizontal(idCanvas, lista, etiquetaValor, comparacion){
+  const c = ctx(idCanvas); if (!c) return;
+  const cont = c.parentElement;
+  if (!lista.length){ cont.innerHTML = '<div class="vacio">Sin datos en el período seleccionado.</div>'; return; }
+
+  const datasets = [];
+  if (comparacion){
+    datasets.push({ label: comparacion.etiquetaPrev, data: lista.map(x => x.anterior),
+      backgroundColor: CONFIG.colores.grisSerie, hoverBackgroundColor: "#8E8E9A",
+      borderWidth: 0, borderRadius: 4, borderSkipped: false,
+      barPercentage: .84, categoryPercentage: .74 });
+  }
+  datasets.push({
+    label: etiquetaValor, data: lista.map(x => x.valor),
+    /* Degradado horizontal: la barra se enciende hacia su extremo. */
+    backgroundColor: (c) => lista[c.dataIndex] && (lista[c.dataIndex].esResto || lista[c.dataIndex].esNoAplica)
+      ? barraDegradada(c.chart, "#CFCFD6", "#B5B5B5")
+      : barraDegradada(c.chart, "#F5A800", "#FFC24D"),
+    hoverBackgroundColor: (c) => barraDegradada(c.chart, "#0B0B0D", "#3A3A42"),
+    borderColor: "rgba(11,11,13,.10)", borderWidth: 1,
+    borderRadius: 4, borderSkipped: false,
+    barPercentage: .84, categoryPercentage: .74
+  });
+
+  const suma = lista.reduce((t, x) => t + (x.valor || 0), 0);
+  ESTADO.graficos[idCanvas] = new Chart(c, {
+    type: "bar",
+    data: { labels: lista.map(x => x.etiqueta), datasets },
+    options: {
+      indexAxis: "y", responsive: true, maintainAspectRatio: false,
+      interaction: { mode: "index", axis: "y", intersect: false },
+      plugins: {
+        legend: { display: !!comparacion, position: "top", align: "end",
+                  labels: { boxWidth: 12, boxHeight: 12, padding: 10, usePointStyle: true, pointStyle: "rectRounded" } },
+        tooltip: Object.assign({}, tooltipBase, { callbacks: {
+          label: it => it.dataset.label + ": " + (it.parsed.x === null ? "sin dato" : FMT_ENTERO.format(it.parsed.x)),
+          afterBody: it => {
+            const x = lista[it[0].dataIndex];
+            const partes = [];
+            if (suma) partes.push("Participación: " + pct(x.valor, suma));
+            if (comparacion && x.anterior !== null && x.anterior !== undefined){
+              const v = variacion(x.valor, x.anterior);
+              partes.push("Variación interanual: " + (v === null ? "n/a" : (v > 0 ? "+" : "") + FMT_DECIMAL.format(v) + "%"));
+            }
+            return partes.join("\n");
+          }
+        }})
+      },
+      scales: {
+        x: { beginAtZero: true, grid: { color: "#EFEFF2", drawTicks: false }, border: { display: false },
+             ticks: { callback: v => FMT_ENTERO.format(v), padding: 8 } },
+        y: { grid: { display: false }, border: { color: "#D2D2D8" },
+             ticks: { autoSkip: false, font: { size: 10.5 }, padding: 6,
+                      callback: function(v){ const t = this.getLabelForValue(v); return t.length > 34 ? t.slice(0, 33) + "…" : t; } } }
+      }
+    }
+  });
+}
+
+/** Anillo para distribuciones de pocas categorías. */
+function dibujarTorta(idCanvas, lista){
+  const c = ctx(idCanvas); if (!c) return;
+  const cont = c.parentElement;
+  if (!lista.length){ cont.innerHTML = '<div class="vacio">Sin datos en el período seleccionado.</div>'; return; }
+  const datos = recortarTop(lista, 8, "Otros");
+  const suma = datos.reduce((t, x) => t + x.valor, 0);
+  ESTADO.graficos[idCanvas] = new Chart(c, {
+    type: "doughnut",
+    data: {
+      labels: datos.map(x => x.etiqueta),
+      datasets: [{ data: datos.map(x => x.valor),
+        backgroundColor: datos.map((_, i) => CONFIG.colores.categorias[i % CONFIG.colores.categorias.length]),
+        borderColor: "#FFFFFF", borderWidth: 3,
+        hoverOffset: 10, hoverBorderColor: "#FFFFFF", hoverBorderWidth: 3 }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false, cutout: "58%",
+      plugins: {
+        legend: { position: "right", labels: { boxWidth: 10, boxHeight: 10, padding: 11,
+                  font: { size: 11 }, usePointStyle: true, pointStyle: "circle" } },
+        tooltip: Object.assign({}, tooltipBase, { callbacks: {
+          label: it => it.label + ": " + FMT_ENTERO.format(it.parsed) + " (" + pct(it.parsed, suma) + ")"
+        }})
+      }
+    }
+  });
+}
+
+/* ==================================================================================
+   EXPORTACIÓN A PDF
+   window.print() con hoja @media print dedicada: las tablas salen como tablas reales
+   (texto seleccionable, sin pixelado) y los canvas se imprimen a resolución nativa.
+   ================================================================================== */
+function nombreArchivoPdf(){
+  const ind = indicadorDe(ESTADO.vistaActiva);
+  const vista = ESTADO.vistaActiva === "resumen" ? "resumen" : (ind ? ind.archivoPdf : ESTADO.vistaActiva);
+  const periodo = esAcumulado()
+    ? "acumulado-" + ESTADO.filtros.anio
+    : CONFIG.meses[ESTADO.filtros.mes - 1].toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") + "-" + ESTADO.filtros.anio;
+  return "bibliotecas-" + vista + "-" + periodo + ".pdf";
+}
+
+function exportarPdf(){
+  const ind = indicadorDe(ESTADO.vistaActiva);
+  document.getElementById("imp-vista").textContent =
+    ESTADO.vistaActiva === "resumen" ? "Resumen de indicadores" : (ind ? ind.nombre : "");
+  document.getElementById("imp-periodo").textContent = etiquetaSeleccion() + (esAcumulado() ? " (acumulado)" : "");
+  document.getElementById("imp-generado").textContent =
+    new Date().toLocaleDateString("es-CL") + " a las " +
+    new Date().toLocaleTimeString("es-CL", { hour: "2-digit", minute: "2-digit" });
+  document.getElementById("imp-filtros").textContent = textoFiltros();
+
+  const titulo = document.title;
+  document.title = nombreArchivoPdf().replace(/\.pdf$/, "");
+  const restaurar = () => {
+    document.title = titulo;
+    Object.values(ESTADO.graficos).forEach(g => { try { g.resize(); } catch(e){} });
+  };
+  Object.values(ESTADO.graficos).forEach(g => { try { g.resize(); } catch(e){} });
+  window.addEventListener("afterprint", restaurar, { once: true });
+  setTimeout(() => { window.print(); }, 150);
+  setTimeout(restaurar, 4000);
+}
+
+if (window.matchMedia){
+  const mq = window.matchMedia("print");
+  const h = () => Object.values(ESTADO.graficos).forEach(g => { try { g.resize(); } catch(e){} });
+  if (mq.addEventListener) mq.addEventListener("change", h);
+  else if (mq.addListener) mq.addListener(h);
+}
+
+/* ==================================================================================
+   ARRANQUE
+   ================================================================================== */
+async function iniciar(){
+  const capa = document.getElementById("capa-carga");
+  const detalle = document.getElementById("detalle-carga");
+  try {
+    detalle.textContent = "Descargando y agregando las hojas del libro. La primera carga puede tardar unos segundos.";
+    await cargarTodo();
+  } catch (e){
+    anotar("Sistema", "Error inesperado durante la carga: " + e.message);
+  }
+
+  const algunaOk = CONFIG.indicadores.some(i => ESTADO.datos[i.id] && ESTADO.datos[i.id].estado === "ok");
+  if (!algunaOk){
+    const diagnostico = esOrigenLocal()
+      ? "<strong>El dashboard se abrió como archivo local (file://)</strong>" +
+        "Por seguridad, el navegador no deja que una página abierta desde el disco descargue datos de Google. " +
+        "Necesita servirse desde una dirección web: súbelo a GitHub Pages, o levanta un servidor local con " +
+        "<code>python -m http.server 8000</code> y entra a <code>http://localhost:8000</code>."
+      : "<strong>No se pudieron cargar los datos</strong>" +
+        "Revisa que las hojas sigan publicadas en la web (Archivo → Compartir → Publicar en la web, formato CSV) " +
+        "y que los gid de la configuración correspondan a las hojas correctas.<br><br>" +
+        CONFIG.indicadores.map(i => {
+          const d = ESTADO.datos[i.id];
+          return "<strong>" + escapar(i.nombre) + ":</strong> " + escapar(d ? d.error : "sin respuesta");
+        }).join("<br>");
+    capa.innerHTML = '<div style="max-width:660px;padding:0 24px"><div class="bloque-error">' + diagnostico + "</div></div>";
+    return;
+  }
+
+  construirMenu();
+  construirContenedores();
+  construirFiltros();
+  renderizar();
+  document.getElementById("btn-pdf").addEventListener("click", exportarPdf);
+  capa.classList.add("oculta");
+
+  /* Resumen técnico en consola: el saneamiento de datos no se expone en la interfaz. */
+  if (DIAGNOSTICO.length){
+    console.groupCollapsed("Bibliotecas Duoc UC · diagnóstico de datos (" + DIAGNOSTICO.length + " notas)");
+    DIAGNOSTICO.forEach(l => console.log(l));
+    console.groupEnd();
+  }
+}
+document.addEventListener("DOMContentLoaded", iniciar);
+</script>
+</body>
+</html>
